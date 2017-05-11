@@ -287,7 +287,7 @@ def getAuroraAlpha(obj):
         return 1.0
 
 
-def setupMinimapRender(mdlroot, scene, lamp_color = (1.0, 1.0, 1.0), alpha_mode = 'SKY'):
+def setupMinimapRender(mdlroot, scene, lamp_color = (1.0, 1.0, 1.0), alpha_mode = 'TRANSPARENT'):
     # Create the lamp if not already present in scene
     lampName = 'MinimapLamp'
     camName  = 'MinimapCamera'
