@@ -1,5 +1,6 @@
-import collections
+"""TODO: DOC."""
 
+import collections
 import bpy
 
 from . import nvb_def
@@ -8,6 +9,7 @@ from . import nvb_animnode
 
 
 class Animation():
+    """TODO: DOC."""
 
     def __init__(self, name = 'UNNAMED'):
         self.name      = name
@@ -17,14 +19,12 @@ class Animation():
         self.eventList = []
         self.nodeList  = collections.OrderedDict()
 
-
     def getAnimNode(self, nodeName, parentName = nvb_def.null):
         key = parentName + nodeName
         if key in self.nodeList:
             return self.nodeList[key]
         else:
             return None
-
 
     def addAsciiNode(self, asciiBlock):
         node = nvb_animnode.Node()
@@ -36,10 +36,8 @@ class Animation():
         else:
             self.nodeList[key] = node
 
-
     def addEvent(self, event):
         self.eventList.append(event)
-
 
     def addAnimToScene(self, scene, rootDummy):
         # Create a new scene
@@ -55,11 +53,10 @@ class Animation():
         animScene.frame_current = 0
 
         if not rootDummy:
-            return # Nope
+            return  # Nope
 
         # Copy objects to the new scene:
         self.copyObjectToScene(animScene, rootDummy, None)
-
 
     def copyObjectToScene(self, scene, theOriginal, parent):
         '''
@@ -75,7 +72,8 @@ class Animation():
 
         # rootDummy ?
         objType = theOriginal.type
-        if (objType == 'EMPTY') and (theOriginal.nvb.dummytype == nvb_def.Dummytype.MDLROOT ):
+        if (objType == 'EMPTY') and \
+           (theOriginal.nvb.dummytype == nvb_def.Dummytype.MDLROOT):
             # We copied the root dummy, set some stuff
             theCopy.nvb.isanimation = True
             theCopy.nvb.animname    = self.name
@@ -88,81 +86,54 @@ class Animation():
             animNode = self.getAnimNode(theOriginal.name, theOriginal.parent.name)
         else:
             animNode = self.getAnimNode(theOriginal.name)
-
-
-        deepCopy = False
-        if deepCopy:
-            # Always copy all data & materials.
-            # Each animation has it's own data.
-            if theOriginal.data:
-                data      = theOriginal.data.copy()
-                data.name = theOriginal.name + '.' + self.name
-                theCopy.data = data
-                # Create a copy of the material
-                if (theOriginal.active_material):
-                    material      = theOriginal.active_material.copy()
-                    material.name = theOriginal.active_material.name + '.' + self.name
-                    theCopy.active_material = material
-        else:
-            # Create only a single copy of data and materials which is
-            # shared between animations.
-            # Create an extra copy only on a on-demand basis, i.e. if there
-            # are animations attached which need it.
-            animDataName = nvb_def.animdataPrefix + theOriginal.name
-            if (objType == 'LAMP'):
-                if animDataName in bpy.data.lamps:
-                    data = bpy.data.lamps[animDataName]
-                else:
-                    data      = theOriginal.data.copy()
-                    data.name = animDataName
-                theCopy.data = data
-            elif (objType == 'MESH'):
-                if animNode.requiresUniqueData():
-                    # We need to copy the material and therefore the data block
-                    data         = theOriginal.data.copy()
-                    data.name    = theOriginal.name + '.' + self.name
-                    theCopy.data = data
-                    if (theOriginal.active_material):
-                        # Copy the material
-                        material      = theOriginal.active_material.copy()
-                        material.name = theOriginal.active_material.name + '.' + self.name
-                        theCopy.active_material = material
-                        # No need to copy the textures, as the texture settings
-                        # belong to the material texture slot, not the
-                        # texture itself
-                else:
-                    if animDataName in bpy.data.meshes:
-                        data = bpy.data.meshes[animDataName]
-                    else:
-                        data      = theOriginal.data.copy()
-                        data.name = animDataName
-                    theCopy.data = data
-
         if animNode:
-            '''
-            # Only copy as needed
-            # We need to copy the data for:
-            # - Lamps
-            # - Meshes & materials when there are alphakeys
-            # (Textures aren't needed)
-            if (objType == 'LAMP'):
-                data         = theOriginal.data.copy()
-                data.name    = theOriginal.name + '.' + self.name
-                theCopy.data = data
-            elif (objType == 'MESH'):
-                if animNode.requiresUniqueData():
-                    data         = theOriginal.data.copy()
-                    data.name    = theOriginal.name + '.' + self.name
+            deepCopy = False
+            if deepCopy:
+                # Always copy all data & materials.
+                # Each animation has it's own data.
+                if theOriginal.data:
+                    data      = theOriginal.data.copy()
+                    data.name = theOriginal.name + '.' + self.name
                     theCopy.data = data
                     # Create a copy of the material
                     if (theOriginal.active_material):
                         material      = theOriginal.active_material.copy()
                         material.name = theOriginal.active_material.name + '.' + self.name
                         theCopy.active_material = material
-                        # No need to copy the textures, as the texture alpha
-                        # belongs to the materials texture slot, not the
-                        # texture itself
-            '''
+            else:
+                # Create only a single copy of data and materials which is
+                # shared between animations.
+                # Create an extra copy only on a on-demand basis, i.e. if there
+                # are animations attached which need it.
+                animDataName = nvb_def.animdataPrefix + theOriginal.name
+                if (objType == 'LAMP'):
+                    if animDataName in bpy.data.lamps:
+                        data = bpy.data.lamps[animDataName]
+                    else:
+                        data      = theOriginal.data.copy()
+                        data.name = animDataName
+                    theCopy.data = data
+                elif (objType == 'MESH'):
+                    if animNode.requiresUniqueData():
+                        # We need to copy the material and therefore the data block
+                        data         = theOriginal.data.copy()
+                        data.name    = theOriginal.name + '.' + self.name
+                        theCopy.data = data
+                        if (theOriginal.active_material):
+                            # Copy the material
+                            material      = theOriginal.active_material.copy()
+                            material.name = theOriginal.active_material.name + '.' + self.name
+                            theCopy.active_material = material
+                            # No need to copy the textures, as the texture settings
+                            # belong to the material texture slot, not the
+                            # texture itself
+                    else:
+                        if animDataName in bpy.data.meshes:
+                            data = bpy.data.meshes[animDataName]
+                        else:
+                            data      = theOriginal.data.copy()
+                            data.name = animDataName
+                        theCopy.data = data
             animNode.addAnimToObject(theCopy, self.name)
 
         # Link copy to the anim scene
@@ -172,17 +143,14 @@ class Animation():
         for child in theOriginal.children:
             self.copyObjectToScene(scene, child, theCopy)
 
-
     def addEventsToObject(self, rootDummy):
         for event in self.eventList:
             newItem = rootDummy.nvb.eventList.add()
             newItem.frame = nvb_utils.nwtime2frame(event[0])
             newItem.name  = event[1]
 
-
     def getAnimFromScene(self, scene, rootDummyName = ''):
         pass
-
 
     def getAnimFromAscii(self, asciiBlock):
         blockStart = -1
@@ -199,7 +167,10 @@ class Animation():
             elif (label == 'transtime'):
                 self.transtime = float(line[1])
             elif (label == 'animroot'):
-                self.root = line[1]
+                try:
+                    self.root = line[1]
+                except:
+                    self.root = 'undefined'
             elif (label == 'event'):
                 self.addEvent((float(line[1]), line[2]))
             elif (label == 'node'):
@@ -210,7 +181,6 @@ class Animation():
                     blockStart = -1
                 elif (label == 'node'):
                     raise nvb_def.MalformedMdlFile('Unexpected "endnode"')
-
 
     def animNodeToAscii(self, bObject, asciiLines):
         node = nvb_animnode.Node()

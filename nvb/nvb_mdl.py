@@ -1,3 +1,4 @@
+"""TODO: DOC."""
 import os
 import collections
 import enum
@@ -35,14 +36,14 @@ class Mdl():
         except (IndexError, AttributeError):
             raise nvb_def.MalformedMdlFile('Invalid node type')
 
-        switch = {'dummy':      nvb_node.Dummy, \
-                  'patch':      nvb_node.Patch, \
-                  'reference':  nvb_node.Reference, \
-                  'trimesh':    nvb_node.Trimesh,  \
-                  'danglymesh': nvb_node.Danglymesh, \
-                  'skin':       nvb_node.Skinmesh, \
-                  'emitter':    nvb_node.Emitter, \
-                  'light':      nvb_node.Light, \
+        switch = {'dummy':      nvb_node.Dummy,
+                  'patch':      nvb_node.Patch,
+                  'reference':  nvb_node.Reference,
+                  'trimesh':    nvb_node.Trimesh,
+                  'danglymesh': nvb_node.Danglymesh,
+                  'skin':       nvb_node.Skinmesh,
+                  'emitter':    nvb_node.Emitter,
+                  'light':      nvb_node.Light,
                   'aabb':       nvb_node.Aabb}
         try:
             node = switch[nodeType]()
@@ -52,7 +53,6 @@ class Mdl():
         node.loadAscii(asciiBlock)
         self.addNode(node)
 
-
     def loadAsciiAnimation(self, asciiBlock):
         if asciiBlock is None:
             raise nvb_def.MalformedMdlFile('Empty Animation')
@@ -61,7 +61,6 @@ class Mdl():
         animation.getAnimFromAscii(asciiBlock)
 
         self.addAnimation(animation)
-
 
     def addNode(self, newNode):
         # Blender requires unique object names. Names in mdls are only
@@ -73,20 +72,16 @@ class Mdl():
         if newNode:
             key = newNode.parentName + newNode.name
             if key in self.nodeDict:
-                #TODO: Should probably raise an exception
-                pass
+                print('Neverblender - WARNING: Node name conflict.')
             else:
                 self.nodeDict[key] = newNode
-
 
     def addAnimation(self, anim):
         if anim:
             if anim.name in self.animDict:
-                #TODO: Should probably raise an exception
-                pass
+                print('Neverblender - WARNING: Animation name conflict.')
             else:
                 self.animDict[anim.name] = anim
-
 
     def importToScene(self, scene):
         rootDummy = None
@@ -140,7 +135,6 @@ class Mdl():
         for (animName, anim) in self.animDict.items():
             anim.addAnimToScene(scene, rootDummy)
 
-
     def loadAscii(self, asciiLines):
         State = enum.Enum('State', 'START HEADER GEOMETRY GEOMETRYNODE ANIMATION')
         cs    = State.START
@@ -166,10 +160,10 @@ class Mdl():
                     cs = State.GEOMETRY
                 elif (label == 'setsupermodel'):
                     try:
-                       # line should be ['setsupermodel', modelname, supermodelname]
-                       self.supermodel = line[2]
+                        # line should be ['setsupermodel', modelname, supermodelname]
+                        self.supermodel = line[2]
                     except IndexError:
-                       print("Neverblender - WARNING: Unable to read supermodel. Default value " + self.supermodel)
+                        print("Neverblender - WARNING: Unable to read supermodel. Default value " + self.supermodel)
 
                 elif (label == 'classification'):
                     try:
@@ -220,18 +214,17 @@ class Mdl():
                     else:
                         raise nvb_def.MalformedMdlFile('Unexpected "doneanim" at line' + str(idx))
 
-
     def geometryToAscii(self, bObject, asciiLines, simple = False):
 
         nodeType = nvb_utils.getNodeType(bObject)
-        switch = {'dummy':      nvb_node.Dummy, \
-                  'patch':      nvb_node.Patch, \
-                  'reference':  nvb_node.Reference, \
-                  'trimesh':    nvb_node.Trimesh,  \
-                  'danglymesh': nvb_node.Danglymesh, \
-                  'skin':       nvb_node.Skinmesh, \
-                  'emitter':    nvb_node.Emitter, \
-                  'light':      nvb_node.Light, \
+        switch = {'dummy':      nvb_node.Dummy,
+                  'patch':      nvb_node.Patch,
+                  'reference':  nvb_node.Reference,
+                  'trimesh':    nvb_node.Trimesh,
+                  'danglymesh': nvb_node.Danglymesh,
+                  'skin':       nvb_node.Skinmesh,
+                  'emitter':    nvb_node.Emitter,
+                  'light':      nvb_node.Light,
                   'aabb':       nvb_node.Aabb}
         try:
             node = switch[nodeType]()
@@ -252,7 +245,6 @@ class Mdl():
         for (imporder, child) in childList:
             self.geometryToAscii(child, asciiLines, simple)
 
-
     def animationsToAscii(self, asciiLines):
         for scene in bpy.data.scenes:
             animRootDummy = nvb_utils.getAnimationRootdummy(scene)
@@ -261,8 +253,6 @@ class Mdl():
                 # if animRootDummy.name.rfind(self.validExports[0]):
                 anim = nvb_anim.Animation()
                 anim.toAscii(scene, animRootDummy, asciiLines, self.name)
-
-
 
     def generateAscii(self, asciiLines, rootDummy, exports = {'ANIMATION', 'WALKMESH'}):
         self.name           = rootDummy.name
@@ -304,11 +294,8 @@ class Xwk(Mdl):
 
         self.walkmeshType   = wkmType
 
-
-
     def loadAsciiAnimation(self, asciiBlock):
         pass # No animations in walkmeshes
-
 
     def loadAscii(self, asciiLines):
         # Parse the walkmesh
@@ -329,7 +316,6 @@ class Xwk(Mdl):
                     # "endnode" before "node"
                     raise nvb_def.MalformedMdlFile('Unexpected "endnode" at line' + str(idx))
 
-
     def generateAscii(self, asciiLines, rootDummy, exports = {'ANIMATION', 'WALKMESH'}):
         self.name = rootDummy.name
 
@@ -339,7 +325,6 @@ class Xwk(Mdl):
         # Geometry
         for child in rootDummy.children:
             self.geometryToAscii(child, asciiLines, True)
-
 
     def importToScene(self, scene):
         if self.nodeDict:
@@ -366,7 +351,7 @@ class Xwk(Mdl):
             else:
                 node.dummytype = nvb_def.Dummytype.PWKROOT
             node.name = self.name
-            rootdummy = node.addToScene(scene)
+            # rootdummy = node.addToScene(scene)
 
             for (nodeKey, node) in self.nodeDict.items():
                 obj = node.addToScene(scene)
@@ -386,18 +371,16 @@ class Wok(Xwk):
         self.walkmeshType   = 'wok'
         self.classification = nvb_def.Classification.UNKNOWN
 
-
     def geometryToAscii(self, bObject, asciiLines, simple):
 
         nodeType = nvb_utils.getNodeType(bObject)
         if nodeType == 'aabb':
             node = nvb_node.Aabb()
             node.toAscii(bObject, asciiLines, simple)
-            return # We'll take the first aabb object
+            return  # We'll take the first aabb object
         else:
             for child in bObject.children:
                 self.geometryToAscii(child, asciiLines, simple)
-
 
     def generateAscii(self, asciiLines, rootDummy, exports = {'ANIMATION', 'WALKMESH'}):
         self.name = rootDummy.name
@@ -407,7 +390,6 @@ class Wok(Xwk):
         asciiLines.append('# Exported from blender at ' + currentTime.strftime('%A, %Y-%m-%d'))
         # Geometry = AABB
         self.geometryToAscii(rootDummy, asciiLines, True)
-
 
     def importToScene(self, scene):
         pass

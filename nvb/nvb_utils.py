@@ -45,24 +45,25 @@ def materialExists(diffuse = (1.0, 1.0, 1.0),
                 isclose(a[1], b[1], rel_tol) and
                 isclose(a[2], b[2], rel_tol) )
 
-    for material in bpy.data.materials:
+    for mat in bpy.data.materials:
         eq = False
-        if isNull(imageName):
+        if not imageName:
             # No texture
-            eq = not material.active_texture
-            eq = eq and (material.alpha_factor == alpha)
+            eq = not mat.active_texture
+            eq = eq and (mat.alpha == alpha)
         else:
             # Has to have a texture
-            if material.active_texture:
-                if material.active_texture.type == 'IMAGE':
-                    if material.active_texture.image.name:
-                        eq = (material.active_texture.image.name == imageName)
-                eq = eq and (material.texture_slots[material.active_texture_index].alpha_factor == alpha)
+            if mat.active_texture:
+                if mat.active_texture.type == 'IMAGE':
+                    if mat.active_texture.image.name:
+                        eq = (mat.active_texture.image.name == imageName)
+                active_texslot = mat.texture_slots[mat.active_texture_index]
+                eq = eq and (active_texslot.alpha_factor == alpha)
 
-        eq = eq and isclose_3f(material.diffuse_color, diffuse)
-        eq = eq and isclose_3f(material.specular_color, specular)
+        eq = eq and isclose_3f(mat.diffuse_color, diffuse)
+        eq = eq and isclose_3f(mat.specular_color, specular)
         if eq:
-            return material
+            return mat
 
     return None
 
@@ -130,10 +131,14 @@ def chunker(seq, size):
 
 def getImageFilename(image):
     '''
+    Returns the image name without the file extension.
+
     '''
+    # Try getting the image name from the image source path
     filename = os.path.splitext(os.path.basename(image.filepath))[0]
     if (filename == ''):
-        return image.name
+        # If that doesn't work, get it from the image name
+        filename = os.path.splitext(os.path.basename(image.name))[0]
 
     return filename
 
@@ -237,7 +242,19 @@ def nwangle2euler(nwangle):
 
 
 def setMaterialAuroraAlpha(mat, alpha):
-    #if alpha <= 1.0:
+    '''
+    if alpha < 1.0:
+        mat.use_transparency = True
+        tex = mat.active_texture
+        if tex:
+            mat.alpha = 0.0
+            tslotIdx = mat.active_texture_index
+            tslot    = mat.texture_slots[tslotIdx]
+            tslot.use_map_alpha = True
+            tslot.alpha_factor  = alpha
+        else:
+            mat.alpha = alpha
+    '''
     mat.use_transparency = True
     tex = mat.active_texture
     if tex:
@@ -248,18 +265,6 @@ def setMaterialAuroraAlpha(mat, alpha):
         tslot.alpha_factor  = alpha
     else:
         mat.alpha = alpha
-
-
-def setObjectAuroraAlpha(obj, alpha):
-    '''
-    This will set
-        1. texture_slot.alpha_factor when there is a texture
-        2. material.alpha there is no texture, but a material
-        3. Do nothing, when there is no material
-    '''
-    mat = obj.active_material
-    if mat:
-        setMaterialAuroraAlpha(mat, alpha)
 
 
 def getAuroraAlpha(obj):

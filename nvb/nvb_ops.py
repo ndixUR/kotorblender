@@ -210,10 +210,10 @@ class MdlImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             default=False,
             )
 
-    # Hidden options, only used for batch minimap creation
+    # Hidden option, only used for batch minimap creation
     minimapMode = bpy.props.BoolProperty(
             name = 'Minimap Mode',
-            description = 'Ignore lights and shadow meshes',
+            description = 'Ignore lights and walkmeshes',
             default = False,
             options = {'HIDDEN'},
             )

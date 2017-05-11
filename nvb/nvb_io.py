@@ -1,3 +1,5 @@
+"""TODO: DOC."""
+
 import os
 import bpy
 
@@ -13,7 +15,7 @@ def findRootDummy():
     # 2. Search 'Empty' objects in the current scene
     # 4. Search all objects
 
-    obj = bpy.context.object
+    obj = None
     # Selected object
     if nvb_utils.isRootDummy(obj, nvb_def.Dummytype.MDLROOT):
         return obj
@@ -74,7 +76,9 @@ def loadMdl(operator,
         filetypes = ['pwk', 'dwk']
         (wkmPath, wkmFilename) = os.path.split(filepath)
         for wkmType in filetypes:
-            wkmFilepath = os.path.join(wkmPath, os.path.splitext(wkmFilename)[0] + '.' + wkmType)
+            wkmFilepath = os.path.join(wkmPath,
+                                       os.path.splitext(wkmFilename)[0] +
+                                       '.' + wkmType)
             fp = os.fsencode(wkmFilepath)
             try:
                 asciiLines = [line.strip().split() for line in open(fp, 'r')]
@@ -82,7 +86,8 @@ def loadMdl(operator,
                 wkm.loadAscii(asciiLines)
                 wkm.importToScene(scene)
             except IOError:
-                print("Neverblender - WARNING: No walkmesh found " + wkmFilepath)
+                print("Neverblender - WARNING: No walkmesh found " +
+                      wkmFilepath)
 
     return {'FINISHED'}
 
@@ -107,7 +112,7 @@ def saveMdl(operator,
 
     mdlRoot = findRootDummy()
     if mdlRoot:
-        print('Exporting: ' + mdlRoot.name)
+        print('Neverblender: Exporting ' + mdlRoot.name)
         mdl = nvb_mdl.Mdl()
         asciiLines = []
         mdl.generateAscii(asciiLines, mdlRoot)
@@ -115,13 +120,12 @@ def saveMdl(operator,
             f.write('\n'.join(asciiLines))
 
         if 'WALKMESH' in exports:
+            wkmRoot = None
             if mdl.classification == nvb_def.Classification.TILE:
                 wkm     = nvb_mdl.Wok()
                 wkmRoot = mdlRoot
                 wkmType = 'wok'
             else:
-                wkmRoot = None
-
                 # We need to look for a walkmesh rootdummy
                 wkmRootName = mdl.name + '_pwk'
                 if (wkmRootName in bpy.data.objects):
@@ -140,14 +144,19 @@ def saveMdl(operator,
                 if (not wkmRoot) and (wkmRootName in bpy.data.objects):
                     wkmRoot = bpy.data.objects[wkmRootName]
                     wkm     = nvb_mdl.Xwk('dwk')
-                # TODO: If we can't find one by name we'll look for an arbitrary one
 
             if wkmRoot:
                 asciiLines = []
                 wkm.generateAscii(asciiLines, wkmRoot)
 
+                wkmFileExt = '.pwk'
+                if mdlRoot.nvb.classification == nvb_def.Classification.DOOR:
+                    wkmFileExt = '.dwk'
+                elif mdlRoot.nvb.classification == nvb_def.Classification.TILE:
+                    wkmFileExt = '.wok'
+
                 (wkmPath, wkmFilename) = os.path.split(filepath)
-                wkmFilepath = os.path.join(wkmPath, os.path.splitext(wkmFilename)[0] + '.' + wkm.walkmeshType)
+                wkmFilepath = os.path.splitext(filepath)[0] + wkmFileExt
                 with open(os.fsencode(wkmFilepath), 'w') as f:
                     f.write('\n'.join(asciiLines))
 
