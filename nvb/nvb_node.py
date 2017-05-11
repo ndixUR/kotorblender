@@ -154,19 +154,19 @@ class GeometryNode():
         # Scaling fix
         transmat = self.getAdjustedMatrix(obj)
         loc = transmat.to_translation()
-        s = '  position {: 8.5f} {: 8.5f} {: 8.5f}'.format(round(loc[0], 5), round(loc[1], 5), round(loc[2], 5))
+        s = '  position {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
         asciiLines.append(s)
 
         rot = nvb_utils.euler2nwangle(transmat.to_euler('XYZ'))
-        s = '  orientation {: 8.5f} {: 8.5f} {: 8.5f} {: 8.5f}'.format(round(rot[0], 5), round(rot[1], 5), round(rot[2], 5), round(rot[3], 5))
+        s = '  orientation {: 8.7f} {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
         asciiLines.append(s)
         '''
         loc = obj.location
-        s = '  position {: 8.5f} {: 8.5f} {: 8.5f}'.format(round(loc[0], 5), round(loc[1], 5), round(loc[2], 5))
+        s = '  position {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
         asciiLines.append(s)
 
         rot = nvb_utils.getAuroraRotFromObject(obj)
-        s = '  orientation {: 8.5f} {: 8.5f} {: 8.5f} {: 8.5f}'.format(round(rot[0], 5), round(rot[1], 5), round(rot[2], 5), round(rot[3], 5))
+        s = '  orientation {: 8.7f} {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
         asciiLines.append(s)
         '''
         color = obj.nvb.wirecolor
@@ -235,19 +235,19 @@ class Dummy(GeometryNode):
         # Scaling fix
         transmat = self.getAdjustedMatrix(obj)
         loc = transmat.to_translation()
-        s = '  position {: 8.5f} {: 8.5f} {: 8.5f}'.format(round(loc[0], 5), round(loc[1], 5), round(loc[2], 5))
+        s = '  position {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
         asciiLines.append(s)
 
         rot = nvb_utils.euler2nwangle(transmat.to_euler('XYZ'))
-        s = '  orientation {: 8.5f} {: 8.5f} {: 8.5f} {: 8.5f}'.format(round(rot[0], 5), round(rot[1], 5), round(rot[2], 5), round(rot[3], 5))
+        s = '  orientation {: 8.7f} {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
         asciiLines.append(s)
         '''
         loc = obj.location
-        s = '  position {: 8.5f} {: 8.5f} {: 8.5f}'.format(round(loc[0], 5), round(loc[1], 5), round(loc[2], 5))
+        s = '  position {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
         asciiLines.append(s)
 
         rot = nvb_utils.getAuroraRotFromObject(obj)
-        s = '  orientation {: 8.5f} {: 8.5f} {: 8.5f} {: 8.5f}'.format(round(rot[0], 5), round(rot[1], 5), round(rot[2], 5), round(rot[3], 5))
+        s = '  orientation {: 8.7f} {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
         asciiLines.append(s)
         '''
 
@@ -655,9 +655,9 @@ class Trimesh(GeometryNode):
         # Add vertices
         asciiLines.append('  verts ' + str(len(mesh.vertices)))
         l_round = round
-        formatString = '    {: 8.5f} {: 8.5f} {: 8.5f}'
+        formatString = '    {: 8.7f} {: 8.7f} {: 8.7f}'
         for v in mesh.vertices:
-            s = formatString.format(l_round(v.co[0], 5), l_round(v.co[1], 5), l_round(v.co[2], 5))
+            s = formatString.format(l_round(v.co[0], 7), l_round(v.co[1], 7), l_round(v.co[2], 7))
             asciiLines.append(s)
 
         # Add faces and corresponding tverts and shading groups
@@ -708,9 +708,9 @@ class Trimesh(GeometryNode):
 
             if (len(uvList) > 0):
                 asciiLines.append('  tverts ' + str(len(uvList)))
-                formatString = '    {: 6.3f} {: 6.3f}'
+                formatString = '    {: 6.7f} {: 6.7f}'
                 for uv in uvList:
-                    s = formatString.format(round(uv[0], 3), round(uv[1], 3))
+                    s = formatString.format(round(uv[0], 7), round(uv[1], 7))
                     asciiLines.append(s)
 
         bpy.data.meshes.remove(mesh)
@@ -1216,7 +1216,7 @@ class Light(GeometryNode):
                      asciiLines.append('    ' + flare.texture)
                 asciiLines.append('  flarepositions zd')
                 for flare in obj.nvb.flareList:
-                    asciiLines.append('    ' + str(round(flare.position, 5)))
+                    asciiLines.append('    ' + str(round(flare.position, 7)))
                 asciiLines.append('  flaresizes zd')
                 for flare in obj.nvb.flareList:
                     asciiLines.append('    ' + str(flare.size))
@@ -1301,32 +1301,32 @@ class Aabb(Trimesh):
             node = aabbTree.pop(0)
             asciiLines.append('  aabb  ' +
                               ' ' +
-                              str(l_round(node[0], 5)) +
+                              str(l_round(node[0], 7)) +
                               ' ' +
-                              str(l_round(node[1], 5)) +
+                              str(l_round(node[1], 7)) +
                               ' ' +
-                              str(l_round(node[2], 5)) +
+                              str(l_round(node[2], 7)) +
                               ' ' +
-                              str(l_round(node[3], 5)) +
+                              str(l_round(node[3], 7)) +
                               ' ' +
-                              str(l_round(node[4], 5)) +
+                              str(l_round(node[4], 7)) +
                               ' ' +
-                              str(l_round(node[5], 5)) +
+                              str(l_round(node[5], 7)) +
                               ' ' +
                               str(node[6]) )
             for node in aabbTree:
                 asciiLines.append('    ' +
-                                  str(l_round(node[0], 5)) +
+                                  str(l_round(node[0], 7)) +
                                   ' ' +
-                                  str(l_round(node[1], 5)) +
+                                  str(l_round(node[1], 7)) +
                                   ' ' +
-                                  str(l_round(node[2], 5)) +
+                                  str(l_round(node[2], 7)) +
                                   ' ' +
-                                  str(l_round(node[3], 5)) +
+                                  str(l_round(node[3], 7)) +
                                   ' ' +
-                                  str(l_round(node[4], 5)) +
+                                  str(l_round(node[4], 7)) +
                                   ' ' +
-                                  str(l_round(node[5], 5)) +
+                                  str(l_round(node[5], 7)) +
                                   ' ' +
                                   str(node[6]) )
 
@@ -1337,14 +1337,14 @@ class Aabb(Trimesh):
         else:
             asciiLines.append('  parent ' + nvb_def.null)
         loc = obj.location
-        asciiLines.append('  position ' + str(round(loc[0], 5)) + ' ' +
-                                          str(round(loc[1], 5)) + ' ' +
-                                          str(round(loc[2], 5)) )
+        asciiLines.append('  position ' + str(round(loc[0], 7)) + ' ' +
+                                          str(round(loc[1], 7)) + ' ' +
+                                          str(round(loc[2], 7)) )
         rot = nvb_utils.getAuroraRotFromObject(obj)
-        asciiLines.append('  orientation ' + str(round(rot[0], 5)) + ' ' +
-                                             str(round(rot[1], 5)) + ' ' +
-                                             str(round(rot[2], 5)) + ' ' +
-                                             str(round(rot[3], 5)) )
+        asciiLines.append('  orientation ' + str(round(rot[0], 7)) + ' ' +
+                                             str(round(rot[1], 7)) + ' ' +
+                                             str(round(rot[2], 7)) + ' ' +
+                                             str(round(rot[3], 7)) )
         color = obj.nvb.wirecolor
         asciiLines.append('  wirecolor ' + str(round(color[0], 2)) + ' ' +
                                            str(round(color[1], 2)) + ' ' +
