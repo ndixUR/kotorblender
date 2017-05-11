@@ -34,24 +34,30 @@ def findRootDummy():
 def loadMdl(operator,
             context,
             filepath = '',
-            imports = {'GEOMETRY', 'ANIMATION', 'WALKMESH'},
-            useSmoothGroups = True,
-            textureSingle = True,
+            importGeometry = True,
+            importWalkmesh = True,
+            importSmoothGroups = True,
+            importAnim = True,
+            materialMode = 'SIN',
             textureSearch = False,
-            minimapMode = False):
+            minimapMode = False,
+            minimapSkipFade = False):
     '''
     Called from blender ui
     '''
-    nvb_glob.usePltTextures  = False
-    nvb_glob.useSmoothGroups = useSmoothGroups
-    nvb_glob.minimapMode     = minimapMode
+    nvb_glob.importGeometry     = importGeometry
+    nvb_glob.importSmoothGroups = importSmoothGroups
+    nvb_glob.importAnim         = importAnim
+
+
+    nvb_glob.materialMode = materialMode
 
     nvb_glob.texturePath   = os.path.dirname(filepath)
-    nvb_glob.textureSingle = textureSingle
     nvb_glob.textureSearch = textureSearch
 
-    #parser = nvb_parser.Parser()
-    #parser.load(filepath)
+    nvb_glob.minimapMode     = minimapMode
+    nvb_glob.minimapSkipFade = minimapSkipFade
+
     scene = bpy.context.scene
 
     fp = os.fsencode(filepath)
@@ -60,11 +66,11 @@ def loadMdl(operator,
     print('Importing: ' + filepath)
     mdl = nvb_mdl.Mdl()
     mdl.loadAscii(asciiLines)
-    mdl.importToScene(scene, imports)
+    mdl.importToScene(scene)
 
     # Try to load walkmeshes ... pwk (placeable) and dwk (door)
     # If the files are and the option is activated we'll import them
-    if 'WALKMESH' in imports:
+    if importWalkmesh:
         filetypes = ['pwk', 'dwk']
         (wkmPath, wkmFilename) = os.path.split(filepath)
         for wkmType in filetypes:
@@ -74,9 +80,9 @@ def loadMdl(operator,
                 asciiLines = [line.strip().split() for line in open(fp, 'r')]
                 wkm = nvb_mdl.Xwk(wkmType)
                 wkm.loadAscii(asciiLines)
-                wkm.importToScene(scene, imports)
+                wkm.importToScene(scene)
             except IOError:
-                print("Neverblender: No walkmesh found at " + wkmFilepath)
+                print("Neverblender - WARNING: No walkmesh found " + wkmFilepath)
 
     return {'FINISHED'}
 
@@ -85,16 +91,16 @@ def saveMdl(operator,
          context,
          filepath = '',
          exports = {'ANIMATION', 'WALKMESH'},
-         useSmoothGroups = True,
+         exportSmoothGroups = True,
          applyModifiers = True,
          ):
     '''
     Called from blender ui
     '''
-    nvb_glob.exports         = exports
-    nvb_glob.useSmoothGroups = useSmoothGroups
-    nvb_glob.applyModifiers  = applyModifiers
-    nvb_glob.scene           = bpy.context.scene
+    nvb_glob.exports            = exports
+    nvb_glob.exportSmoothGroups = exportSmoothGroups
+    nvb_glob.applyModifiers     = applyModifiers
+    nvb_glob.scene              = bpy.context.scene
 
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode='OBJECT')

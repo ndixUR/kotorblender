@@ -8,6 +8,7 @@ from . import nvb_glob
 from . import nvb_def
 from . import nvb_utils
 from . import nvb_aabb
+from . import nvb_parse
 
 class FaceList():
     def __init__(self):
@@ -37,7 +38,7 @@ class GeometryNode():
         self.position    = (0.0, 0.0, 0.0)
         self.orientation = (0.0, 0.0, 0.0, 0.0)
         self.scale       = 1.0
-        self.wirecolor   = (0.0, 0.0, 0.0) #Unused ?
+        self.wirecolor   = (0.0, 0.0, 0.0)
 
         # Name of the corresponding object in blender
         # (used to resolve naming conflicts)
@@ -358,8 +359,9 @@ class Trimesh(GeometryNode):
                                                   imgPath,
                                                   recursive=nvb_glob.textureSearch,
                                                   place_holder=False,
-                                                  ncase_cmp=False)
+                                                  ncase_cmp=True)
         if (image is None):
+            print('Neverblender - WARNING: Could not load image ' + imgName)
             image = bpy.data.images.new(imgName, 512, 512)
         else:
             image.name = imgName
@@ -429,13 +431,15 @@ class Trimesh(GeometryNode):
                     self.bitmap = line[1]
                 elif (label == 'verts'):
                     numVals = l_int(line[1])
-                    self.parse3f(asciiNode[idx+1:idx+numVals+1], self.verts)
+                    nvb_parse.f3(asciiNode[idx+1:idx+numVals+1], self.verts)
+                    #self.verts = [(float(l[0]), float(l[1]), float(l[2])) for l in asciiNode[idx+1:idx+numVals+1]]
                 elif (label == 'faces'):
                     numVals = l_int(line[1])
                     self.parseFaceList(asciiNode[idx+1:idx+numVals+1])
                 elif (label == 'tverts'):
                     numVals = l_int(line[1])
-                    self.parse2f(asciiNode[idx+1:idx+numVals+1], self.tverts)
+                    nvb_parse.f2(asciiNode[idx+1:idx+numVals+1], self.tverts)
+                    #self.tverts = [(float(l[0]), float(l[1])) for l in asciiNode[idx+1:idx+numVals+1]]
 
 
     def parseFaceList(self, asciiFaces):
@@ -448,35 +452,44 @@ class Trimesh(GeometryNode):
 
 
     def createMaterial(self, name):
-        material = bpy.data.materials.new(name)
-        material.diffuse_color     = self.diffuse
-        material.diffuse_intensity = 1.0
-        material.specular_color    = self.specular
+        material = None
+        texName  = self.bitmap.lower()
+        if nvb_glob.materialMode == 'SIN':
+            # Avoid duplicate materials, search for similar ones.
+            material = nvb_utils.materialExists(self.diffuse,
+                                                self.specular,
+                                                texName,
+                                                self.alpha)
 
-        texName = self.bitmap.lower()
-        if not nvb_utils.isNull(texName):
-            textureSlot = material.texture_slots.add()
-            # If a texture with the same name was already created treat
-            # them as if they were the same, i.e. just use the old one
-            if (texName in bpy.data.textures):
-                textureSlot.texture = bpy.data.textures[texName]
-            else:
-                textureSlot.texture = bpy.data.textures.new(texName, type='IMAGE')
-            textureSlot.texture_coords        = 'UV'
-            textureSlot.use_map_color_diffuse = True
+        if not material:
+            material = bpy.data.materials.new(name)
+            material.diffuse_color     = self.diffuse
+            material.diffuse_intensity = 1.0
+            material.specular_color    = self.specular
 
-            # Load the image for the texture, but check if it was
-            # already loaded before. If so, use that one.
-            imgName = self.bitmap
-            if (imgName in bpy.data.images):
-                image = bpy.data.images[imgName]
-                textureSlot.texture.image = image
-            else:
-                image = self.createImage(imgName, nvb_glob.texturePath)
-                if image is not None:
+            if not nvb_utils.isNull(self.bitmap):
+                textureSlot = material.texture_slots.add()
+                # If a texture with the same name was already created treat
+                # them as if they were the same, i.e. just use the old one
+                if (texName in bpy.data.textures):
+                    textureSlot.texture = bpy.data.textures[texName]
+                else:
+                    textureSlot.texture = bpy.data.textures.new(texName, type='IMAGE')
+                textureSlot.texture_coords        = 'UV'
+                textureSlot.use_map_color_diffuse = True
+
+                # Load the image for the texture, but check if it was
+                # already loaded before. If so, use that one.
+                imgName = self.bitmap
+                if (imgName in bpy.data.images):
+                    image = bpy.data.images[imgName]
                     textureSlot.texture.image = image
+                else:
+                    image = self.createImage(imgName, nvb_glob.texturePath)
+                    if image is not None:
+                        textureSlot.texture.image = image
 
-        nvb_utils.setMaterialAuroraAlpha(material, self.alpha)
+            nvb_utils.setMaterialAuroraAlpha(material, self.alpha)
 
         return material
 
@@ -490,41 +503,44 @@ class Trimesh(GeometryNode):
         mesh.tessfaces.foreach_set('vertices_raw', unpack_face_list(self.facelist.faces))
 
         # Create material
-        material = self.createMaterial(name)
-        mesh.materials.append(material)
+        if nvb_glob.materialMode != 'NON':
+            material = self.createMaterial(name)
+            mesh.materials.append(material)
 
-        # Create UV map
-        if (len(self.tverts) > 0) and (mesh.tessfaces) and (not nvb_utils.isNull(self.bitmap)):
-            uv = mesh.tessface_uv_textures.new(name + '.uv')
-            mesh.tessface_uv_textures.active = uv
+            # Create UV map
+            if (len(self.tverts) > 0) and (mesh.tessfaces) and (not nvb_utils.isNull(self.bitmap)):
+                uv = mesh.tessface_uv_textures.new(name + '.uv')
+                mesh.tessface_uv_textures.active = uv
 
-            for i in range(len(self.facelist.uvIdx)):
-                # Get a tessface
-                tessface = mesh.tessfaces[i]
-                # Apply material (there is only ever one)
-                tessface.material_index = 0
-                # Grab a uv for the face
-                tessfaceUV = mesh.tessface_uv_textures[0].data[i]
-                # Get the indices of the 3 uv's for this face
-                uvIdx = self.facelist.uvIdx[i]
+                for i in range(len(self.facelist.uvIdx)):
+                    # Get a tessface
+                    tessface = mesh.tessfaces[i]
+                    # Apply material (there is only ever one)
+                    tessface.material_index = 0
+                    # Grab a uv for the face
+                    tessfaceUV = mesh.tessface_uv_textures[0].data[i]
+                    # Get the indices of the 3 uv's for this face
+                    uvIdx = self.facelist.uvIdx[i]
 
-                # BEGIN EEEKADOODLE FIX
-                # BUG: Evil eekadoodle problem where faces that have
-                # vert index 0 at location 3 are shuffled.
-                vertIdx = self.facelist.faces[i]
-                if vertIdx[2] == 0:
-                    uvIdx = uvIdx[1], uvIdx[2], uvIdx[0]
-                # END EEEKADOODLE FIX
+                    # BEGIN EEEKADOODLE FIX
+                    # BUG: Evil eekadoodle problem where faces that have
+                    # vert index 0 at location 3 are shuffled.
+                    vertIdx = self.facelist.faces[i]
+                    if vertIdx[2] == 0:
+                        uvIdx = uvIdx[1], uvIdx[2], uvIdx[0]
+                    # END EEEKADOODLE FIX
 
-                # Add uv coordinates to face
-                tessfaceUV.uv1 = self.tverts[uvIdx[0]]
-                tessfaceUV.uv2 = self.tverts[uvIdx[1]]
-                tessfaceUV.uv3 = self.tverts[uvIdx[2]]
-                # Apply texture to uv face
-                tessfaceUV.image = material.texture_slots[0].texture.image
+                    # Add uv coordinates to face
+                    tessfaceUV.uv1 = self.tverts[uvIdx[0]]
+                    tessfaceUV.uv2 = self.tverts[uvIdx[1]]
+                    tessfaceUV.uv3 = self.tverts[uvIdx[2]]
+
+                    # Apply texture to uv face
+                    if material.texture_slots[0]:
+                        tessfaceUV.image = material.texture_slots[0].texture.image
 
         # Import smooth groups as sharp edges
-        if nvb_glob.useSmoothGroups:
+        if nvb_glob.importSmoothGroups:
             bm = bmesh.new()
             mesh.update()
             bm.from_mesh(mesh)
@@ -561,10 +577,11 @@ class Trimesh(GeometryNode):
 
 
     def addToScene(self, scene):
-        if nvb_glob.minimapMode and self.tilefade:
-            # Fading objects won't be imported in minimap mode
-            # We may need it for the tree stucture, so import it as an empty
-            return Dummy.convert(self, scene)
+        if nvb_glob.minimapMode:
+            if (self.tilefade and nvb_glob.minimapSkipFade) or not self.render:
+                # Fading objects won't be imported in minimap mode
+                # We may need it for the tree stucture, so import it as an empty
+                return Dummy.addToScene(self, scene)
         mesh = self.createMesh(self.name)
         obj  = bpy.data.objects.new(self.name, mesh)
         self.setObjectData(obj)
@@ -586,7 +603,7 @@ class Trimesh(GeometryNode):
                                                 str(round(color[2], 2))  )
 
             # Check if this material has a texture assigned
-            texture   = material.active_texture
+            texture = material.active_texture
             imgName = nvb_def.null
             if texture:
                 # Only image textures will be exported
@@ -642,8 +659,12 @@ class Trimesh(GeometryNode):
         # Calculate smooth groups
         smoothGroups    = []
         numSmoothGroups = 0
-        if (obj.nvb.smoothgroup == 'NONE') or (not nvb_glob.useSmoothGroups):
-            # One single smooth group
+        if (obj.nvb.smoothgroup == 'SEPR') or (not nvb_glob.exportSmoothGroups):
+            # 0 = Do not use smoothgroups
+            smoothGroups    = [0] * len(mesh.polygons)
+            numSmoothGroups = 1
+        elif (obj.nvb.smoothgroup == 'SING'):
+            # All faces belong to smooth group 1
             smoothGroups    = [1] * len(mesh.polygons)
             numSmoothGroups = 1
         else:
@@ -680,7 +701,13 @@ class Trimesh(GeometryNode):
 
             faceList.append([tface.vertices[0], tface.vertices[1], tface.vertices[2], smGroup, uv1, uv2, uv3, matIdx])
 
-        if simple:
+        # Check a texture, we don't want uv's when there is no texture
+        material = obj.active_material
+        texture  = None
+        if material:
+            texture = material.active_texture
+
+        if simple or not texture:
             asciiLines.append('  faces ' + str(len(faceList)))
 
             vertDigits        = str(len(str(len(mesh.vertices))))
@@ -783,8 +810,8 @@ class Danglymesh(Trimesh):
                     self.displacement = l_float(line[1])
                 elif (label == 'constraints'):
                     numVals = l_int(line[1])
-                    self.parse1f(asciiNode[idx+1:idx+numVals+1], self.constraints)
-
+                    nvb_parse.f1(asciiNode[idx+1:idx+numVals+1], self.constraints)
+                    #self.constraints = [float(l[0]) for l in asciiNode[idx+1:idx+numVals+1]]
 
     def addConstraintsToObject(self, obj):
         '''
@@ -924,7 +951,7 @@ class Skinmesh(Trimesh):
                     line += '  ' + w[0] + ' ' + str(round(w[1], 3))
             else:
                 # No weights for this vertex ... this is a problem
-                print('WARNING: Missing vertex weight')
+                print('Neverblender - WARNING: Missing vertex weight in ' + obj.name)
                 line = 'ERROR: no weight'
             asciiLines.append(line)
 
@@ -1025,7 +1052,7 @@ class Emitter(GeometryNode):
         if nvb_glob.minimapMode:
             # We don't need emitters in minimap mode
             # We may need it for the tree stucture, so import it as an empty
-            return GeometryNode.convert(self, scene)
+            return GeometryNode.addToScene(self, scene)
 
         mesh = self.createMesh(self.name)
         obj  = bpy.data.objects.new(self.name, mesh)
@@ -1039,7 +1066,7 @@ class Emitter(GeometryNode):
         GeometryNode.addDataToAscii(self, obj, asciiLines, exportObjects, classification, simple)
 
         if obj.nvb.rawascii not in bpy.data.texts:
-            print('Warning: No emitter data for ' + obj.name)
+            print('Neverblender - WARNING: No emitter data for ' + obj.name)
             return
         txt      = bpy.data.texts[obj.nvb.rawascii]
         txtLines = [l.split() for l in txt.as_string().split('\n')]
@@ -1134,16 +1161,19 @@ class Light(GeometryNode):
                     flareTextureNamesStart = idx+1
                 elif (label == 'flaresizes'):
                     # List of floats
-                    numFlares = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
-                    self.parse1f(asciiNode[idx+1:idx+numFlares+1], self.flareList.sizes)
+                    numVals = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
+                    nvb_parse.f1(asciiNode[idx+1:idx+numVals+1], self.flareList.sizes)
+                    #self.flareList.sizes = [float(l[0]) for l in asciiNode[idx+1:idx+numVals+1]]
                 elif (label == 'flarepositions'):
                     # List of floats
-                    numFlares = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
-                    self.parse1f(asciiNode[idx+1:idx+numFlares+1], self.flareList.positions)
+                    numVals = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
+                    nvb_parse.f1(asciiNode[idx+1:idx+numVals+1], self.flareList.positions)
+                    #self.flareList.positions = [float(l[0]) for l in asciiNode[idx+1:idx+numVals+1]]
                 elif (label == 'flarecolorshifts'):
                     # List of float 3-tuples
-                    numFlares = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
-                    self.parse3f(asciiNode[idx+1:idx+numFlares+1], self.flareList.colorshifts)
+                    numVals = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
+                    nvb_parse.f3(asciiNode[idx+1:idx+numVals+1], self.flareList.colorshifts)
+                    #self.flareList.colorshifts = [(float(l[0]), float(l[1]), float(l[2])) for l in asciiNode[idx+1:idx+numVals+1]]
 
         # Load flare texture names:
         for i in range(numFlares):
@@ -1196,7 +1226,7 @@ class Light(GeometryNode):
         if nvb_glob.minimapMode:
             # We don't need lights in minimap mode
             # We may need it for the tree stucture, so import it as an empty
-            return GeometryNode.convert(self, scene)
+            return GeometryNode.addToScene(self, scene)
         lamp = self.createLamp(self.name)
         obj  = bpy.data.objects.new(self.name, lamp)
         self.setObjectData(obj)
@@ -1259,7 +1289,7 @@ class Aabb(Trimesh):
         self.meshtype = nvb_def.Meshtype.AABB
 
     def addAABBToAscii(self, obj, asciiLines):
-        walkmesh = obj.to_mesh(nvb_glob.scene, nvb_glob.applyModifiers, nvb.glob.meshConvert)
+        walkmesh = obj.to_mesh(nvb_glob.scene, nvb_glob.applyModifiers, nvb_glob.meshConvert)
 
         faceList = []
         faceIdx  = 0
@@ -1290,7 +1320,7 @@ class Aabb(Trimesh):
                 faceIdx += 1
             else:
                 # Ngon or no polygon at all (This should never be the case with tessfaces)
-                print('WARNING: Ngon in walkmesh. Unable to generate aabb.')
+                print('Neverblender - WARNING: Ngon in walkmesh. Unable to generate aabb.')
                 return
 
         aabbTree = []
@@ -1393,7 +1423,7 @@ class Aabb(Trimesh):
         if nvb_glob.minimapMode:
             # No walkmeshes in minimap mode and we don't need an empty as
             # replacement either as AABB nodes never have children
-            return
+            return GeometryNode.addToScene(self, scene)
         mesh = self.createMesh(self.name)
         obj = bpy.data.objects.new(self.name, mesh)
         self.setObjectData(obj)

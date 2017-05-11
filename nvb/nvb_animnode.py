@@ -4,12 +4,14 @@ import bpy
 
 from . import nvb_def
 from . import nvb_utils
+from . import nvb_parse
 
 
 class Keys():
     def __init__(self):
         self.position       = []
         self.orientation    = []
+        self.scale          = []
         self.selfillumcolor = []
         self.alpha          = []
         # Lights/lamps
@@ -31,6 +33,7 @@ class Node():
         # Non-keyed
         self.position    = None
         self.orientation = None
+        self.scale       = None
         self.alpha       = None
         # Keyed
         self.keys = Keys()
@@ -108,6 +111,7 @@ class Node():
 
     def loadAscii(self, asciiBlock):
         l_float    = float
+        l_int      = int
         l_isNumber = nvb_utils.isNumber
         for idx, line in enumerate(asciiBlock):
             try:
@@ -117,7 +121,7 @@ class Node():
                 continue
             if   label == 'node':
                 self.nodeType = line[1].lower()
-                self.name     = nvb_utils.getName(line[2])
+                self.name = nvb_utils.getName(line[2])
             elif label == 'endnode':
                 return
             elif label == 'endlist':
@@ -140,6 +144,10 @@ class Node():
                                     l_float(line[3]),
                                     l_float(line[4]) )
                 self.isEmpty = False
+            elif label == 'scale':
+                # scale: 1 key, scalekey: >= 1 key (probably)
+                self.scale = l_float(line[1])
+                self.isEmpty = False
             elif label == 'alpha':
                 # alpha: 1 key, alphakey: >= 1 key (probably)
                 self.alpha = l_float(line[1])
@@ -149,9 +157,15 @@ class Node():
             elif label == 'positionkey':
                 numKeys = self.findEnd(asciiBlock[idx+1:])
                 self.parseKeys3f(asciiBlock[idx+1:idx+numKeys+1], self.keys.position)
+                self.isEmpty = False
             elif label == 'orientationkey':
                 numKeys = self.findEnd(asciiBlock[idx+1:])
                 self.parseKeys4f(asciiBlock[idx+1:idx+numKeys+1], self.keys.orientation)
+                self.isEmpty = False
+            elif label == 'scalekey':
+                numKeys = self.findEnd(asciiBlock[idx+1:])
+                nvb_parse.f2(asciiBlock[idx+1:idx+numKeys+1], self.keys.scale)
+                self.isEmpty = False
             elif label == 'alphakey':
                 # If this is an emitter, alphakeys are incompatible. We'll
                 # handle them later as plain text
@@ -160,22 +174,27 @@ class Node():
                     self.parseKeysIncompat(asciiBlock[idx:idx+numKeys+1])
                 else:
                     self.parseKeys1f(asciiBlock[idx+1:idx+numKeys+1], self.keys.alpha)
+                self.isEmpty = False
             elif label == 'selfillumcolorkey':
                 numKeys = self.findEnd(asciiBlock[idx+1:])
                 self.parseKeys3f(asciiBlock[idx+1:idx+numKeys+1], self.keys.selfillumcolor)
+                self.isEmpty = False
             # Lights/lamps only
             elif label == 'colorkey':
                 numKeys = self.findEnd(asciiBlock[idx+1:])
                 self.parseKeys3f(asciiBlock[idx+1:idx+numKeys+1], self.keys.color)
+                self.isEmpty = False
             elif label == 'radiuskey':
                 numKeys = self.findEnd(asciiBlock[idx+1:])
                 self.parseKeys1f(asciiBlock[idx+1:idx+numKeys+1], self.keys.radius)
+                self.isEmpty = False
 
             # Some unknown text.
             # Probably keys for emitters = incompatible with blender. Import as text.
             elif not l_isNumber(line[0]):
                 numKeys = self.findEnd(asciiBlock[idx+1:])
                 self.parseKeysIncompat(asciiBlock[idx:idx+numKeys+1])
+                self.isEmpty = False
 
 
     def addAnimToMaterial(self, targetMaterial, animName = ''):
@@ -232,10 +251,6 @@ class Node():
                 curveY.keyframe_points.insert(frame, currEul.y)
                 curveZ.keyframe_points.insert(frame, currEul.z)
         elif self.orientation != None:
-            '''
-            eul = nvb_utils.nwangle2euler(self.orientation)
-            nvb_utils.setObjectRotationAurora(targetObject, self.orientation)
-            '''
             curveX = action.fcurves.new(data_path='rotation_euler', index=0)
             curveY = action.fcurves.new(data_path='rotation_euler', index=1)
             curveZ = action.fcurves.new(data_path='rotation_euler', index=2)
@@ -255,15 +270,30 @@ class Node():
                 curveY.keyframe_points.insert(frame, key[2])
                 curveZ.keyframe_points.insert(frame, key[3])
         elif (self.position != None):
-            '''
-            targetObject.location = self.position
-            '''
             curveX = action.fcurves.new(data_path='location', index=0)
             curveY = action.fcurves.new(data_path='location', index=1)
             curveZ = action.fcurves.new(data_path='location', index=2)
             curveX.keyframe_points.insert(0, self.position[0])
             curveY.keyframe_points.insert(0, self.position[1])
             curveZ.keyframe_points.insert(0, self.position[2])
+
+        # Set scale channels if there are scale keys
+        if (self.keys.scale):
+            curveX = action.fcurves.new(data_path='scale', index=0)
+            curveY = action.fcurves.new(data_path='scale', index=1)
+            curveZ = action.fcurves.new(data_path='scale', index=2)
+            for key in self.keys.scale:
+                frame = nvb_utils.nwtime2frame(key[0])
+                curveX.keyframe_points.insert(frame, key[1])
+                curveY.keyframe_points.insert(frame, key[1])
+                curveZ.keyframe_points.insert(frame, key[1])
+        elif (self.scale != None):
+            curveX = action.fcurves.new(data_path='scale', index=0)
+            curveY = action.fcurves.new(data_path='scale', index=1)
+            curveZ = action.fcurves.new(data_path='scale', index=2)
+            curveX.keyframe_points.insert(0, self.scale)
+            curveY.keyframe_points.insert(0, self.scale)
+            curveZ.keyframe_points.insert(0, self.scale)
 
         # Set selfillumcolor channels if there are selfillumcolor keys
         if (self.keys.selfillumcolor):
@@ -289,7 +319,7 @@ class Node():
                 curveG.keyframe_points.insert(nvb_utils.nwtime2frame(key[0]), key[2])
                 curveB.keyframe_points.insert(nvb_utils.nwtime2frame(key[0]), key[3])
 
-        # For lamps: Set radius channels. Impert as distance
+        # For lamps: Set radius channels. Import as distance
         if (self.keys.radius):
             curve = action.fcurves.new(data_path='distance', index=0)
             for key in self.keys.radius:

@@ -7,7 +7,20 @@ from . import nvb_def
 
 
 def isNull(s):
-    return s.lower() == nvb_def.null
+    return (not s or s.lower() == nvb_def.null.lower())
+
+
+def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
+def isNumber(s):
+    try:
+        float(s)
+    except ValueError:
+        return False
+    else:
+        return True
 
 
 def getName(s):
@@ -17,6 +30,41 @@ def getName(s):
     '''
     #return s.lower()
     return s
+
+
+def materialExists(diffuse = (1.0, 1.0, 1.0),
+                   specular = (1.0, 1.0, 1.0),
+                   imageName = '',
+                   alpha = 1.0):
+    '''
+    Compares the diffure, specular and image values of the material
+    to the parameters
+    '''
+    def isclose_3f(a, b, rel_tol=0.1):
+        return (isclose(a[0], b[0], rel_tol) and
+                isclose(a[1], b[1], rel_tol) and
+                isclose(a[2], b[2], rel_tol) )
+
+    for material in bpy.data.materials:
+        eq = False
+        if isNull(imageName):
+            # No texture
+            eq = not material.active_texture
+            eq = eq and (material.alpha_factor == alpha)
+        else:
+            # Has to have a texture
+            if material.active_texture:
+                if material.active_texture.type == 'IMAGE':
+                    if material.active_texture.image.name:
+                        eq = (material.active_texture.image.name == imageName)
+                eq = eq and (material.texture_slots[material.active_texture_index].alpha_factor == alpha)
+
+        eq = eq and isclose_3f(material.diffuse_color, diffuse)
+        eq = eq and isclose_3f(material.specular_color, specular)
+        if eq:
+            return material
+
+    return None
 
 
 def isNumber(s):
@@ -234,7 +282,7 @@ def getAuroraAlpha(obj):
         return 1.0
 
 
-def setupMinimapRender(mdlbase, scene, lamp_color = (1.0, 1.0, 1.0)):
+def setupMinimapRender(mdlroot, scene, lamp_color = (1.0, 1.0, 1.0), alpha_mode = 'SKY'):
     # Create the lamp if not already present in scene
     lampName = 'MinimapLamp'
     camName  = 'MinimapCamera'
@@ -256,8 +304,8 @@ def setupMinimapRender(mdlbase, scene, lamp_color = (1.0, 1.0, 1.0)):
     minimapLamp.data.use_specular = False
     minimapLamp.data.color        = lamp_color
     minimapLamp.data.falloff_type = 'CONSTANT'
-    minimapLamp.data.distance     = (mdlbase.nvb.minimapzoffset+20.0)*2.0
-    minimapLamp.location.z        = mdlbase.nvb.minimapzoffset+20.0
+    minimapLamp.data.distance     = (mdlroot.nvb.minimapzoffset+20.0)*2.0
+    minimapLamp.location.z        = mdlroot.nvb.minimapzoffset+20.0
 
     # Create the cam if not already present in scene
     if camName in scene.objects:
@@ -276,17 +324,18 @@ def setupMinimapRender(mdlbase, scene, lamp_color = (1.0, 1.0, 1.0)):
     # Adjust cam properties
     minimapCam.data.type        = 'ORTHO'
     minimapCam.data.ortho_scale = 10.0
-    minimapCam.location.z       = mdlbase.nvb.minimapzoffset+20.0
+    minimapCam.location.z       = mdlroot.nvb.minimapzoffset+20.0
 
     scene.camera = minimapCam
     # Adjust render settings
+    scene.render.alpha_mode                 = alpha_mode
     scene.render.use_antialiasing           = True
     scene.render.pixel_filter_type          = 'BOX'
     scene.render.antialiasing_samples       = '16'
     scene.render.use_shadows                = False
     scene.render.use_envmaps                = False
-    scene.render.resolution_x               = mdlbase.nvb.minimapsize
-    scene.render.resolution_y               = mdlbase.nvb.minimapsize
+    scene.render.resolution_x               = mdlroot.nvb.minimapsize
+    scene.render.resolution_y               = mdlroot.nvb.minimapsize
     scene.render.resolution_percentage      = 100
     scene.render.image_settings.color_mode  = 'RGB'
     scene.render.image_settings.file_format = 'TARGA_RAW'

@@ -106,13 +106,13 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
                                                      ('CL01', 'DWK: Closed 1st', 'Closed State, 1st node for "Use" anim',  12), \
                                                      ('CL02', 'DWK: Closed 2nd', 'Closed State, 2nd node for "Use" anim',  13) ],
                                             default = 'NONE')
-    animscale   = bpy.props.FloatProperty(name = 'Animationscale', description = 'Animation scale for all animations.', default = 1.00, min = 0.0)
-    isanimation = bpy.props.BoolProperty(name = 'Animation', description = 'Whether this dummy and it\'s children are in an animation scene.', default = False)
+    animscale   = bpy.props.FloatProperty(name = 'Animationscale', description = 'Animation scale for all animations', default = 1.00, min = 0.0)
+    isanimation = bpy.props.BoolProperty(name = 'Animation', description = 'Whether this dummy and it\'s children are in an animation scene', default = False)
     # For MDL Rootdummies in animations
-    animname     = bpy.props.StringProperty(name = 'Animation name', description = 'Name of the animation.', default = '')
-    newanimname  = bpy.props.StringProperty(name = 'New name', description = 'Name of the new animation.', default = '')
+    animname     = bpy.props.StringProperty(name = 'Animation name', description = 'Name of the animation', default = '')
+    newanimname  = bpy.props.StringProperty(name = 'New name', description = 'Name of the new animation', default = '')
     transtime    = bpy.props.FloatProperty(name = 'Transitiontime', description = 'Used for for animations only. Set for each Scene individually', default = 1.00, min = 0.0)
-    animroot     = bpy.props.StringProperty(name = 'Animation Root', description = 'Entry point of the animation.', default = '')
+    animroot     = bpy.props.StringProperty(name = 'Animation Root', description = 'Entry point of the animation', default = '')
     eventList    = bpy.props.CollectionProperty(type = NVB_PG_ANIMEVENT)
     eventListIdx = bpy.props.IntProperty(name = "Index for event List", default = 0)
     # For reference emptys
@@ -131,10 +131,11 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
                                                     (nvb_def.Meshtype.EMITTER, 'Emitter', '4 desc', 4)],
                                         default = nvb_def.Meshtype.TRIMESH)
     smoothgroup    = bpy.props.EnumProperty(name = 'Smoothgroup',
-                                            items = [   ('NONE', 'None',   'All faces belong to a single smoothgroup.',         0),
-                                                        ('AUTO', 'Auto',   'Generate smoothgroups either from edges marked as sharp or edge angles when no sharp edges are present.',  1),
-                                                        ('ANGL', 'Angles', 'Generate smoothgroups from edge angles.',     2) ],
-                                            default = 'AUTO')
+                                            items = [   ('SEPR', 'Seperate', 'All faces have their own smoothgroup',   0),
+                                                        ('NONE', 'Single', 'All Faces belong to the same smoothgroup', 1),
+                                                        ('AUTO', 'Auto',   'Generate smoothgroups either from edges marked as sharp or edge angles when no sharp edges are present',  2)
+                                                         ],
+                                            default = 'SEPR')
 
     shadow           = bpy.props.BoolProperty(name = 'Shadow', description = 'Whether to cast shadows', default = True, update=nvb_update_shadow_prop)
     tilefade         = bpy.props.BoolProperty(name = 'Tilefade', description = 'Object will fade when the player is nearby. (Tilesets only)', default = False)
@@ -144,7 +145,7 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
     rotatetexture    = bpy.props.BoolProperty(name = 'Rotatetexture', description = 'Automatically rotates texture to prevent seams', default = False)
     transparencyhint = bpy.props.IntProperty(name = 'Transparency Hint', default = 0, min = 0, max = 32)
     selfillumcolor   = bpy.props.FloatVectorProperty(name = 'Selfilluminationcolor',
-                                                     description = 'Makes the object seem to glow but does not emit light.',
+                                                     description = 'Makes the object seem to glow but does not emit light',
                                                      subtype = 'COLOR_GAMMA',
                                                      default = (0.0, 0.0, 0.0),
                                                      min = 0.0, max = 1.0,

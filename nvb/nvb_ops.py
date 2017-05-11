@@ -176,39 +176,51 @@ class MdlImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
             options = {'HIDDEN'},
             )
 
-    imports = bpy.props.EnumProperty(
-            name = 'Import',
-            options = {'ENUM_FLAG'},
-            items = (('GEOMETRY', 'Geometry', 'Import dummys and meshes'),
-                     ('ANIMATION', 'Animations', 'Import animations'),
-                     ('WALKMESH', 'Walkmesh', 'Import walkmeshes'),
-                     ),
-            default = {'GEOMETRY', 'ANIMATION', 'WALKMESH'},
-            )
+    importGeometry = bpy.props.BoolProperty(
+            name = 'Import Geometry',
+            description = 'Disable if only animations are needed',
+            default = True)
 
-    useSmoothGroups = bpy.props.BoolProperty(
+    importWalkmesh = bpy.props.BoolProperty(
+            name = 'Import Walkmesh',
+            description = 'Attempt to load placeable and door walkmeshes',
+            default = True)
+
+    importSmoothGroups = bpy.props.BoolProperty(
             name = 'Import smooth groups',
             description = 'Import smooth groups as sharp edges',
-            default = True,
-            )
+            default = True)
 
-    textureSingle = bpy.props.BoolProperty(
-            name = 'One texture per image',
-            description = 'Create only one texture for each image',
-            default = True,
-            )
+    importAnim = bpy.props.BoolProperty(
+            name = 'Import animations',
+            description = 'Import animations',
+            default = True)
+
+    materialMode = bpy.props.EnumProperty(
+            name = 'Materials',
+            items = (('NON', 'None', 'Don\'t create materials or import textures'),
+                     ('SIN', 'Single', 'Create only one material per texture, shared between objects'),
+                     ('MUL', 'Multiple', 'Create a seperate material for each object')),
+            default = 'SIN')
 
     textureSearch = bpy.props.BoolProperty(
             name='Image search',
             description='Search for images in subdirectories' \
-                        '(Warning, may be slow)',
+                        ' (Warning, may be slow)',
             default=False,
             )
 
-    # Hidden option, only used for batch minimap creation
+    # Hidden options, only used for batch minimap creation
     minimapMode = bpy.props.BoolProperty(
             name = 'Minimap Mode',
-            description = 'Ignore lights and fading objects',
+            description = 'Ignore lights and shadow meshes',
+            default = False,
+            options = {'HIDDEN'},
+            )
+
+    minimapSkipFade = bpy.props.BoolProperty(
+            name = 'Minimap Mode: Import Fading Objects',
+            description = 'Ignore fading objects',
             default = False,
             options = {'HIDDEN'},
             )
@@ -241,7 +253,7 @@ class MdlExport(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             default = {'ANIMATION', 'WALKMESH'},
             )
 
-    useSmoothGroups = bpy.props.BoolProperty(
+    exportSmoothGroups = bpy.props.BoolProperty(
             name='Export Smooth groups',
             description='Generate smooth groups from sharp edges' \
                         '(When disabled every face belongs to the same group)',
@@ -250,7 +262,7 @@ class MdlExport(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     applyModifiers = bpy.props.BoolProperty(
             name='Apply Modifiers',
-            description='Apply Modifiers before exporting.',
+            description='Apply Modifiers before exporting',
             default=True,
             )
 
@@ -419,8 +431,8 @@ class NVBOBJECT_OT_AnimsceneAdd(bpy.types.Operator):
                     newScene = bpy.data.scenes.new(newAnimName)
                     # Set fps
                     newScene.render.fps   = nvb_def.fps
-                    animScene.frame_start = sourceScene.frame_start
-                    animScene.frame_end   = sourceScene.frame_end
+                    newScene.frame_start = sourceScene.frame_start
+                    newScene.frame_end   = sourceScene.frame_end
 
                     animRootDummy = nvb_utils.copyAnimScene(newScene, obj, newAnimName, oldAnimName)
                     animRootDummy.nvb.isanimation = True

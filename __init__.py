@@ -20,7 +20,7 @@
 bl_info = {
     "name": "Neverblender",
     "author": "Attila Gyoerkoes",
-    "version": (1, 23),
+    "version": (1, 25),
     "blender": (2, 7, 0),
     "location": "File > Import-Export, Object Properties",
     "description": "Import, export and edit Aurora mdl format",
@@ -58,11 +58,11 @@ import bpy_extras
 
 
 def menu_func_export(self, context):
-    self.layout.operator(nvb_ops.MdlExport.bl_idname, text="Neverwinter Nights (.mdl)")
+    self.layout.operator(nvb_ops.MdlExport.bl_idname, text="Aurora (.mdl)")
 
 
 def menu_func_import(self, context):
-    self.layout.operator(nvb_ops.MdlImport.bl_idname, text="Neverwinter Nights (.mdl)")
+    self.layout.operator(nvb_ops.MdlImport.bl_idname, text="Aurora (.mdl)")
 
 
 def register():
