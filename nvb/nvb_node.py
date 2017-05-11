@@ -607,11 +607,11 @@ class Trimesh(GeometryNode):
         '''
         Helper function to keep UVs unique
         '''
-        if uv in uvList:
-            return uvList.index(uv)
-        else:
-            uvList.append(uv)
-            return (len(uvList)-1)
+        #if uv in uvList:
+        #    return uvList.index(uv)
+        #else:
+        uvList.append(uv)
+        return (len(uvList)-1)
 
 
     def addMeshDataToAscii(self, obj, asciiLines, simple = False):
