@@ -173,6 +173,9 @@ class Animation():
                     self.root = 'undefined'
             elif (label == 'event'):
                 self.addEvent((float(line[1]), line[2]))
+            elif (label == 'eventlist'):
+                numEvents = next((i for i, v in enumerate(asciiBlock[idx+1:]) if not nvb_utils.isNumber(v[0])), -1)
+                list(map(self.addEvent, ((float(v[0]), v[1]) for v in asciiBlock[idx+1:idx+1+numEvents])))
             elif (label == 'node'):
                 blockStart = idx
             elif (label == 'endnode'):
