@@ -140,6 +140,7 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
     shadow           = bpy.props.BoolProperty(name = 'Shadow', description = 'Whether to cast shadows', default = True, update=nvb_update_shadow_prop)
     tilefade         = bpy.props.BoolProperty(name = 'Tilefade', description = 'Object will fade when the player is nearby. (Tilesets only)', default = False)
     render           = bpy.props.BoolProperty(name = 'Render', description = 'Whether to render this object in the scene', default = True)
+    lightmapped      = bpy.props.BoolProperty(name = 'Lightmapped', description = 'Whether this object has shading baked into a lightmap', default = False)
     beaming          = bpy.props.BoolProperty(name = 'beaming', description = 'Object casts beams (?)', default = False)
     inheritcolor     = bpy.props.BoolProperty(name = 'Inheritcolor', description = 'Unused (?)', default = False)
     rotatetexture    = bpy.props.BoolProperty(name = 'Rotatetexture', description = 'Automatically rotates texture to prevent seams', default = False)

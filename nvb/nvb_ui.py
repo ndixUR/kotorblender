@@ -293,6 +293,7 @@ class NVB_PANEL_MESH(bpy.types.Panel):
             col = split.column()
             col.prop(obj.nvb, 'render', text='Render')
             col.prop(obj.nvb, 'shadow', text='Shadow')
+            col.prop(obj.nvb, 'lightmapped', text='Lightmapped')
             col = split.column()
             col.prop(obj.nvb, 'beaming', text='Beaming')
             col.prop(obj.nvb, 'inheritcolor', text='Inherit Color')
