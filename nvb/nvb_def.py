@@ -1,5 +1,5 @@
 ﻿# Null value for parents, textures, etc.
-null = 'null'
+null = 'NULL'
 
 
 class MalformedMdlFile(Exception):
