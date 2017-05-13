@@ -2,8 +2,8 @@ import mathutils
 
 def generateTree(aabb_tree, face_list, rlevel = 0):
 
-    if (rlevel > 100):
-        print('WARNING: Error generating aabb. Recursion level exceeds 100')
+    if (rlevel > 128):
+        print('WARNING: Error generating aabb. Recursion level exceeds 128')
         aabb_tree = []
         return
 
