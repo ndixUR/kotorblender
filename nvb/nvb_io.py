@@ -91,6 +91,21 @@ def loadMdl(operator,
     mdl.loadAscii(asciiLines)
     mdl.importToScene(scene, wkm)
 
+    # processing to use AABB node as trimesh for walkmesh file
+    if wkm is not None and wkm.walkmeshType == 'wok' and mdl.nodeDict and wkm.nodeDict:
+        aabb = None
+        wkmesh = None
+        # find aabb node in model
+        for (nodeKey, node) in mdl.nodeDict.items():
+            if node.nodetype == 'aabb':
+                aabb = node
+        # find mesh node in wkm
+        for (nodeKey, node) in wkm.nodeDict.items():
+            if node.nodetype == 'aabb' or node.nodetype == 'trimesh':
+                wkmesh = node
+        if aabb and wkmesh:
+            aabb.computeLayoutPosition(wkmesh)
+
     return {'FINISHED'}
 
 
@@ -123,9 +138,10 @@ def saveMdl(operator,
 
         if 'WALKMESH' in exports:
             wkmRoot = None
-            if mdl.classification == nvb_def.Classification.TILE:
+            aabb = nvb_utils.searchNode(mdlRoot, lambda x: x.nvb.meshtype == nvb_def.Meshtype.AABB)
+            if aabb is not None:
                 wkm     = nvb_mdl.Wok()
-                wkmRoot = mdlRoot
+                wkmRoot = aabb
                 wkmType = 'wok'
             else:
                 # We need to look for a walkmesh rootdummy
@@ -151,14 +167,8 @@ def saveMdl(operator,
                 asciiLines = []
                 wkm.generateAscii(asciiLines, wkmRoot)
 
-                wkmFileExt = '.pwk'
-                if mdlRoot.nvb.classification == nvb_def.Classification.DOOR:
-                    wkmFileExt = '.dwk'
-                elif mdlRoot.nvb.classification == nvb_def.Classification.TILE:
-                    wkmFileExt = '.wok'
-
                 (wkmPath, wkmFilename) = os.path.split(filepath)
-                wkmFilepath = os.path.splitext(filepath)[0] + wkmFileExt
+                wkmFilepath = os.path.join(wkmPath, os.path.splitext(wkmFilename)[0] + '.' + wkm.walkmeshType)
                 with open(os.fsencode(wkmFilepath), 'w') as f:
                     f.write('\n'.join(asciiLines))
 

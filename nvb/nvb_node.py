@@ -370,6 +370,7 @@ class Trimesh(GeometryNode):
         self.facelist         = FaceList()
         self.tverts           = [] # list of texture vertices
         self.tverts1          = [] # list of texture vertices
+        self.lytposition      = (0.0, 0.0, 0.0)
 
     def createImage(self, imgName, imgPath):
         image = bpy_extras.image_utils.load_image(imgName + '.tga',
@@ -708,6 +709,7 @@ class Trimesh(GeometryNode):
         obj.nvb.selfillumcolor   = self.selfillumcolor
         obj.nvb.ambientcolor     = self.ambient
         obj.nvb.shininess        = self.shininess
+        obj.nvb.lytposition      = self.lytposition
 
 
     def addToScene(self, scene):
@@ -822,12 +824,19 @@ class Trimesh(GeometryNode):
         uvListLM     = [] # List of uv indices
         uvVertListLM = [] # Temp list of uv verts used for each geometry vert
 
+        abs_pos = (0.0, 0.0, 0.0)
+        if self.roottype == 'wok' and obj.nvb.lytposition:
+            abs_pos = (obj.nvb.lytposition[0] + obj.location[0],
+                       obj.nvb.lytposition[1] + obj.location[1],
+                       obj.nvb.lytposition[2] + obj.location[2])
         # Add vertices
         asciiLines.append('  verts ' + str(len(mesh.vertices)))
         l_round = round
         formatString = '    {: .7g} {: .7g} {: .7g}'
         for v in mesh.vertices:
-            s = formatString.format(l_round(v.co[0], 7), l_round(v.co[1], 7), l_round(v.co[2], 7))
+            s = formatString.format(l_round(v.co[0] + abs_pos[0], 7),
+                                    l_round(v.co[1] + abs_pos[1], 7),
+                                    l_round(v.co[2] + abs_pos[2], 7))
             asciiLines.append(s)
 
         # Add faces and corresponding tverts and shading groups
@@ -1489,6 +1498,23 @@ class Aabb(Trimesh):
 
         self.meshtype = nvb_def.Meshtype.AABB
 
+    def computeLayoutPosition(self, wkm):
+        wkmv1 = wkm.verts[wkm.facelist.faces[0][0]]
+        wkmv1 = (wkmv1[0] - wkm.position[0],
+                 wkmv1[1] - wkm.position[1],
+                 wkmv1[2] - wkm.position[2])
+        #print(wkmv1)
+        for faceIdx, face in enumerate(self.facelist.faces):
+            if self.facelist.matId[faceIdx] != 7:
+                v1 = self.verts[face[0]]
+                #print(v1)
+                self.lytposition = (round(wkmv1[0] - v1[0], 6),
+                                    round(wkmv1[1] - v1[1], 6),
+                                    round(wkmv1[2] - v1[2], 6))
+                break
+        bpy.data.objects[self.name].nvb.lytposition = self.lytposition
+        #pprint(bpy.data.objects[self.name])
+
     def addAABBToAscii(self, obj, asciiLines):
         walkmesh = obj.to_mesh(nvb_glob.scene, nvb_glob.applyModifiers, nvb_glob.meshConvert)
 
@@ -1586,7 +1612,8 @@ class Aabb(Trimesh):
         asciiLines.append('  shininess 0')
         asciiLines.append('  bitmap NULL')
         Trimesh.addMeshDataToAscii(self, obj, asciiLines, simple)
-        self.addAABBToAscii(obj, asciiLines)
+        if self.roottype != 'wok':
+            self.addAABBToAscii(obj, asciiLines)
 
 
     def createMesh(self, name):

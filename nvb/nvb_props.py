@@ -158,6 +158,10 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
                                                      min = 0.0, max = 1.0,
                                                      soft_min = 0.0, soft_max = 1.0)
     shininess        = bpy.props.IntProperty(name = 'Shininess', default = 1, min = 0, max = 32)
+    lytposition      = bpy.props.FloatVectorProperty(name = 'Layout Position',
+                                                     description = 'Room position in LYT file.',
+                                                     subtype = 'XYZ',
+                                                     default = (0.0, 0.0, 0.0))
 
     # For danglymeshes
     period       = bpy.props.FloatProperty(name = 'Period', default = 1.0, min = 0.0, max = 32.0)
