@@ -92,6 +92,31 @@ def getAnimationRootdummy(animScene):
     return None
 
 
+def ancestorNode(obj, test):
+    try:
+        if test(obj):
+            return obj
+    except:
+        pass
+    if obj is not None and obj.parent:
+        return ancestorNode(obj.parent, test)
+    return None
+
+
+def searchNode(obj, test):
+    try:
+        if test(obj):
+            return obj
+    except:
+        pass
+    match = None
+    for child in obj.children:
+        match = searchNode(child, test)
+        if match is not None:
+            return match
+    return None
+
+
 def isRootDummy(obj, dummytype = nvb_def.Dummytype.MDLROOT):
     if not obj:
         return False
