@@ -164,10 +164,10 @@ class NVB_LIST_OT_AnimEvent_Move(bpy.types.Operator):
 
 
 class MdlImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
-    '''Import Aurora Engine model (.mdl)'''
+    '''Import Odyssey Engine model (.mdl)'''
 
     bl_idname  = 'nvb.mdlimport'
-    bl_label   = 'Import Aurora MDL'
+    bl_label   = 'Import Odyssey MDL'
     bl_options = {'UNDO'}
 
     filename_ext = '.mdl'
@@ -233,10 +233,10 @@ class MdlImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
 
 class MdlExport(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
-    '''Export Aurora Engine model (.mdl)'''
+    '''Export Odyssey Engine model (.mdl)'''
 
     bl_idname = 'nvb.mdlexport'
-    bl_label  = 'Export Aurora MDL'
+    bl_label  = 'Export Odyssey MDL'
 
     filename_ext = '.mdl'
     filter_glob = bpy.props.StringProperty(

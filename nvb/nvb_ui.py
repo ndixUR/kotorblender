@@ -37,7 +37,7 @@ class NVB_PANEL_EMPTY(bpy.types.Panel):
     It is located under the object data panel in the properties window
     '''
     bl_idname = 'nvb.propertypanel.object'
-    bl_label = 'Aurora Dummy Properties'
+    bl_label = 'Odyssey Dummy Properties'
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'object'
@@ -169,7 +169,7 @@ class NVB_PANEL_LIGHT(bpy.types.Panel):
     It is located under the object data panel in the properties window
     '''
     bl_idname = 'nvb.propertypanel.light'
-    bl_label = 'Aurora Light Properties'
+    bl_label = 'Odyssey Light Properties'
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'object'
@@ -248,7 +248,7 @@ class NVB_PANEL_MESH(bpy.types.Panel):
     It is located under the object data panel in the properties window
     '''
     bl_idname = 'nvb.propertypanel.mesh'
-    bl_label = 'Aurora Mesh Properties'
+    bl_label = 'Odyssey Mesh Properties'
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'object'
