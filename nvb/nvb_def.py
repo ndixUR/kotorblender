@@ -118,15 +118,17 @@ class Dummytype():
 
 
 class Classification():
-    UNKNOWN   = 'UNKNOWN'
-    TILE      = 'TILE'
-    CHARACTER = 'CHARACTER'
-    DOOR      = 'DOOR'
-    EFFECT    = 'EFFECT'
-    GUI       = 'GUI'
-    ITEM      = 'ITEM'
+    UNKNOWN   = 'Other'
+    TILE      = 'Tile'
+    CHARACTER = 'Character'
+    DOOR      = 'Door'
+    EFFECT    = 'Effect'
+    GUI       = 'Gui'
+    SABER     = 'Lightsaber'
+    ITEM      = 'Placeable'
+    FLYER     = 'Flyer'
 
-    ALL = {UNKNOWN, TILE, CHARACTER, DOOR, EFFECT, GUI, ITEM}
+    ALL = {UNKNOWN, TILE, CHARACTER, DOOR, EFFECT, GUI, SABER, ITEM, FLYER}
 
     def __init__():
         pass

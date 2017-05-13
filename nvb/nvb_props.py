@@ -83,12 +83,12 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
     supermodel     = bpy.props.StringProperty(name = 'Supermodel', description = 'Name of the model to inherit animations from', default = nvb_def.null)
     classification = bpy.props.EnumProperty(name  = 'Classification',
                                             items = [ (nvb_def.Classification.UNKNOWN,   'Unknown',   'Unknown classification',              0), \
-                                                      (nvb_def.Classification.TILE,      'Tile',      'Tiles for a tileset',                 1), \
-                                                      (nvb_def.Classification.CHARACTER, 'Character', 'Creatures, characters or placeables', 2), \
-                                                      (nvb_def.Classification.DOOR,      'Door',      'Doors',                               3), \
-                                                      (nvb_def.Classification.EFFECT,    'Effect',    'Effects',                             4), \
-                                                      (nvb_def.Classification.GUI,       'Gui',       'Gui',                                 5), \
-                                                      (nvb_def.Classification.ITEM,      'Item',      'Items or placeables',                 6) ],
+                                                      (nvb_def.Classification.EFFECT,    'Effect',    'Effects',                             1), \
+                                                      (nvb_def.Classification.TILE,      'Tile',      'Tiles for a tileset',                 2), \
+                                                      (nvb_def.Classification.CHARACTER, 'Character', 'Creatures, characters or placeables', 4), \
+                                                      (nvb_def.Classification.DOOR,      'Door',      'Doors',                               8), \
+                                                      (nvb_def.Classification.SABER,     'Lightsaber','Lightsaber weapon',                   16), \
+                                                      (nvb_def.Classification.ITEM,      'Placeable', 'Items or placeables',                 32) ],
                                             default = nvb_def.Classification.UNKNOWN)
     dummysubtype   = bpy.props.EnumProperty(name = 'Subtype',
                                             items = [('NONE', 'None',            'Simple dummy object',                     0), \
