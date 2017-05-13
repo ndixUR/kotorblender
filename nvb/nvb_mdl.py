@@ -318,7 +318,7 @@ class Xwk(Mdl):
             if (label == 'node'):
                 blockStart = idx
             elif (label == 'endnode'):
-                if (blockStart > 0):
+                if (blockStart >= 0):
                     self.loadAsciiNode(asciiLines[blockStart:idx+1])
                     blockStart = -1
                 else:
