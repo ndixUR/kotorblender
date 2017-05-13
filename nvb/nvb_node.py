@@ -1356,10 +1356,17 @@ class Light(GeometryNode):
         lamp = bpy.data.lamps.new(name, 'POINT')
 
         # TODO: Check for negative color values and do something (works fine in blender though)
+        if self.color[0] < 0.0 or self.color[1] < 0.0 or self.color[2] < 0.0:
+            lamp.use_negative = True
+            self.color = (0.0 - self.color[0],
+                          0.0 - self.color[1],
+                          0.0 - self.color[2])
         lamp.color       = self.color
         lamp.energy      = self.multiplier
         lamp.distance    = self.radius
         #lamp.use_sphere  = True
+        if self.shadow == 1:
+            lamp.shadow_method = 'RAY_SHADOW'
 
         return lamp
 
@@ -1429,11 +1436,16 @@ class Light(GeometryNode):
         GeometryNode.addDataToAscii(self, obj, asciiLines, exportObjects, classification)
 
         lamp = obj.data
+        color = (lamp.color[0], lamp.color[1], lamp.color[2])
+        if lamp.use_negative:
+            color[0] = 0.0 - lamp.color[0]
+            color[1] = 0.0 - lamp.color[1]
+            color[2] = 0.0 - lamp.color[2]
         asciiLines.append('  radius ' + str(round(lamp.distance, 1)))
         asciiLines.append('  multiplier ' + str(round(lamp.energy, 1)))
-        asciiLines.append('  color ' +  str(round(lamp.color[0], 2)) + ' ' +
-                                        str(round(lamp.color[1], 2)) + ' ' +
-                                        str(round(lamp.color[2], 2)) )
+        asciiLines.append('  color ' +  str(round(color[0], 2)) + ' ' +
+                                        str(round(color[1], 2)) + ' ' +
+                                        str(round(color[2], 2)))
         asciiLines.append('  ambientonly ' + str(int(obj.nvb.ambientonly)))
         asciiLines.append('  nDynamicType ' + str(int(obj.nvb.isdynamic)))
         asciiLines.append('  affectDynamic ' + str(int(obj.nvb.affectdynamic)))
