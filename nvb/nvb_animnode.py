@@ -731,10 +731,39 @@ class Node():
         # Couldn't find anything ? Return the string itself
         return nodeName
 
+    def exportNeeded(self, animObj):
+        '''
+        Test whether this node should be included in exported ASCII model
+        '''
+        # this is the root node, must be included
+        if animObj.parent is None:
+            return True
+        # this node has animation controllers, include it
+        if ((animObj.animation_data and
+             animObj.animation_data.action and
+             animObj.animation_data.action.fcurves and
+             len(animObj.animation_data.action.fcurves) > 0) or
+            (animObj.active_material and
+             animObj.active_material.animation_data and
+             animObj.active_material.animation_data.action and
+             animObj.active_material.animation_data.action.fcurves and
+             len(animObj.active_material.animation_data.action.fcurves) > 0)):
+            return True
+        # if any children of this node will be included, this node must be
+        for child in animObj.children:
+            if self.exportNeeded(child):
+                return True
+        # no reason to include this node
+        return False
 
     def toAscii(self, animObj, asciiLines, animName):
         originalName = self.getOriginalName(animObj.name, animName)
         originalObj  = bpy.data.objects[originalName]
+
+        # test whether this node should be exported,
+        # previous behavior was to export all nodes for all animations
+        if not self.exportNeeded(animObj):
+            return
 
         originalParent = nvb_def.null
         if animObj.parent:
