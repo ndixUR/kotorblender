@@ -50,6 +50,10 @@ class Mdl():
         except KeyError:
             raise nvb_def.MalformedMdlFile('Invalid node type')
 
+        # tell the node if it is part of a walkmesh (mdl is default)
+        if isinstance(self, Xwk):
+            node.roottype = self.walkmeshType
+
         node.loadAscii(asciiBlock)
         self.addNode(node)
 

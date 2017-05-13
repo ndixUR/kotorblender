@@ -34,6 +34,8 @@ class GeometryNode():
     def __init__(self, name = 'UNNAMED'):
         self.nodetype = 'undefined'
 
+        self.roottype = 'mdl'
+
         self.name        = name
         self.parentName  = nvb_def.null
         self.position    = (0.0, 0.0, 0.0)
