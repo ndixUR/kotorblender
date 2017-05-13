@@ -691,7 +691,8 @@ class Trimesh(GeometryNode):
             # Mark edge as sharp if its faces belong to different smooth groups
             for e in bm.edges:
                 f = e.link_faces
-                if (len(f) > 1) and (self.facelist.shdgr[f[0].index] != self.facelist.shdgr[f[1].index]):
+                #if (len(f) > 1) and (self.facelist.shdgr[f[0].index] != self.facelist.shdgr[f[1].index]):
+                if (len(f) > 1) and not (self.facelist.shdgr[f[0].index] & self.facelist.shdgr[f[1].index]):
                     edgeIdx = e.index
                     mesh.edges[edgeIdx].use_edge_sharp = True
             bm.free()
@@ -884,7 +885,8 @@ class Trimesh(GeometryNode):
             smoothGroups    = [1] * len(mesh.polygons)
             numSmoothGroups = 1
         else:
-            (smoothGroups, numSmoothGroups) = mesh.calc_smooth_groups()
+            (smoothGroups, numSmoothGroups) = mesh.calc_smooth_groups(use_bitflags=True)
+            #(smoothGroups, numSmoothGroups) = mesh.calc_smooth_groups(use_bitflags=False)
 
         faceList = [] # List of triangle faces
         uvList   = [] # List of uv indices
