@@ -62,16 +62,9 @@ def loadMdl(operator,
 
     scene = bpy.context.scene
 
-    fp = os.fsencode(filepath)
-    asciiLines = [line.strip().split() for line in open(fp, 'r')]
-
-    print('Importing: ' + filepath)
-    mdl = nvb_mdl.Mdl()
-    mdl.loadAscii(asciiLines)
-    mdl.importToScene(scene)
-
     # Try to load walkmeshes ... pwk (placeable) and dwk (door)
     # If the files are and the option is activated we'll import them
+    wkm = None
     if importWalkmesh:
         filetypes = ['pwk', 'dwk']
         (wkmPath, wkmFilename) = os.path.split(filepath)
@@ -84,10 +77,19 @@ def loadMdl(operator,
                 asciiLines = [line.strip().split() for line in open(fp, 'r')]
                 wkm = nvb_mdl.Xwk(wkmType)
                 wkm.loadAscii(asciiLines)
-                wkm.importToScene(scene)
+                # adding walkmesh to scene has to be done within mdl import now
+                #wkm.importToScene(scene)
             except IOError:
                 print("Neverblender - WARNING: No walkmesh found " +
                       wkmFilepath)
+
+    fp = os.fsencode(filepath)
+    asciiLines = [line.strip().split() for line in open(fp, 'r')]
+
+    print('Importing: ' + filepath)
+    mdl = nvb_mdl.Mdl()
+    mdl.loadAscii(asciiLines)
+    mdl.importToScene(scene, wkm)
 
     return {'FINISHED'}
 

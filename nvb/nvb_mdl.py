@@ -87,7 +87,7 @@ class Mdl():
             else:
                 self.animDict[anim.name] = anim
 
-    def importToScene(self, scene):
+    def importToScene(self, scene, wkm):
         rootDummy = None
         objIdx = 0
         if (nvb_glob.importGeometry) and self.nodeDict:
@@ -124,6 +124,11 @@ class Mdl():
                     else:
                         # Node with invalid parent.
                         raise nvb_def.MalformedMdlFile(node.name + ' has no parent ' + node.parentName)
+
+        # Import the walkmesh, it will use any placeholder dummies just imported,
+        # and the walkmesh nodes will be copied during animation import
+        if (nvb_glob.importWalkmesh) and not wkm is None and wkm.walkmeshType != 'wok':
+            wkm.importToScene(scene)
 
         # Attempt to import animations
         # Search for the rootDummy if not already present
@@ -333,6 +338,7 @@ class Xwk(Mdl):
     def importToScene(self, scene):
         if self.nodeDict:
             # Walkmeshes have no rootdummys. We need to create one ourselves
+            # Unless the rootdummy is in the model already, because that happens
 
             # Look for the node parents for the list of parents. They should
             # all have the same name
@@ -349,15 +355,26 @@ class Xwk(Mdl):
             else:
                 raise nvb_def.MalformedMdlFile('Invalid parents in walkmesh.')
 
-            node = nvb_node.Dummy(self.name + '_' + self.walkmeshType)
-            if self.walkmeshType == 'dwk':
-                node.dummytype = nvb_def.Dummytype.DWKROOT
+            if self.name in scene.objects and bpy.data.objects[self.name].nvb.dummytype != nvb_def.Dummytype.MDLROOT:
+                node = bpy.data.objects[self.name].nvb
+                if self.walkmeshType == 'dwk':
+                    node.dummytype = nvb_def.Dummytype.DWKROOT
+                else:
+                    node.dummytype = nvb_def.Dummytype.PWKROOT
             else:
-                node.dummytype = nvb_def.Dummytype.PWKROOT
-            node.name = self.name
-            # rootdummy = node.addToScene(scene)
+                node = nvb_node.Dummy(self.name + '_' + self.walkmeshType)
+                if self.walkmeshType == 'dwk':
+                    node.dummytype = nvb_def.Dummytype.DWKROOT
+                else:
+                    node.dummytype = nvb_def.Dummytype.PWKROOT
+                node.name = self.name
+                rootdummy = node.addToScene(scene)
 
             for (nodeKey, node) in self.nodeDict.items():
+                if node.name in scene.objects:
+                    obj = scene.objects[node.name]
+                    scene.objects.unlink(obj)
+                    bpy.data.objects.remove(obj)
                 obj = node.addToScene(scene)
                 # Check if such an object exists
                 if node.parentName in bpy.data.objects:
