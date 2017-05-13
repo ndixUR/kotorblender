@@ -120,7 +120,7 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
     reattachable = bpy.props.BoolProperty(name = 'Reattachable', default = False)
     # Minimap generation
     minimapzoffset = bpy.props.FloatProperty(name = 'Minimap Z Offset', default = 0.00, min = 0.00)
-    minimapsize    = bpy.props.IntProperty(name = 'Size', default = 32, min = 16)
+    minimapsize    = bpy.props.IntProperty(name = 'Size', default = 512, min = 16)
 
     # For mesh objects
     meshtype   = bpy.props.EnumProperty(name = 'Type',
