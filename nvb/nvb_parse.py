@@ -29,6 +29,11 @@ def f5(asciiBlock, floatList):
     """Parse a series on float 5-tuples into a list."""
     _f(asciiBlock, floatList, 5)
 
+def i2(asciiBlock, intList):
+    l_int = int
+    for line in asciiBlock:
+        intList.append((l_int(line[0]), l_int(line[1])))
+
 def txt(asciiBlock, txtBlock):
     """TODO: DOC."""
     # txtBlock = ['\n'+' '.join(l) for l in aciiBlock]

@@ -397,6 +397,9 @@ class Wok(Xwk):
         nodeType = nvb_utils.getNodeType(bObject)
         if nodeType == 'aabb':
             node = nvb_node.Aabb()
+            node.roottype = 'wok'
+            node.nodetype = 'trimesh'
+            node.getRoomLinks(bObject.data)
             node.toAscii(bObject, asciiLines, simple)
             return  # We'll take the first aabb object
         else:

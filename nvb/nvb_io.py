@@ -66,7 +66,7 @@ def loadMdl(operator,
     # If the files are and the option is activated we'll import them
     wkm = None
     if importWalkmesh:
-        filetypes = ['pwk', 'dwk']
+        filetypes = ['pwk', 'dwk', 'wok']
         (wkmPath, wkmFilename) = os.path.split(filepath)
         for wkmType in filetypes:
             wkmFilepath = os.path.join(wkmPath,
@@ -104,7 +104,13 @@ def loadMdl(operator,
             if node.nodetype == 'aabb' or node.nodetype == 'trimesh':
                 wkmesh = node
         if aabb and wkmesh:
+            #print(aabb.lytposition)
             aabb.computeLayoutPosition(wkmesh)
+            #print(aabb.lytposition)
+            if len(wkmesh.roomlinks):
+                aabb.roomlinks = wkmesh.roomlinks
+                aabb.setRoomLinks(scene.objects[aabb.name].data)
+
 
     return {'FINISHED'}
 

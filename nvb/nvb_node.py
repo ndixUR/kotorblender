@@ -370,6 +370,7 @@ class Trimesh(GeometryNode):
         self.facelist         = FaceList()
         self.tverts           = [] # list of texture vertices
         self.tverts1          = [] # list of texture vertices
+        self.roomlinks        = [] # walkmesh only
         self.lytposition      = (0.0, 0.0, 0.0)
 
     def createImage(self, imgName, imgPath):
@@ -485,6 +486,13 @@ class Trimesh(GeometryNode):
                 elif (label == 'tverts1'):
                     numVals = l_int(line[1])
                     nvb_parse.f2(asciiNode[idx+1:idx+numVals+1], self.tverts1)
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
+                elif (label == 'roomlinks'):
+                    try:
+                        numVals = l_int(line[1])
+                    except:
+                        numVals = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
+                    nvb_parse.i2(asciiNode[idx+1:idx+numVals+1], self.roomlinks)
                     self.parsed_lines.extend(range(idx,idx+numVals+1))
         if (self.nodetype == 'trimesh'):
             self.addUnparsedToRaw(asciiNode)
@@ -690,9 +698,70 @@ class Trimesh(GeometryNode):
             del bm
             mesh.show_edge_sharp = True
 
+        if self.roottype == 'wok' and len(self.roomlinks):
+            self.setRoomLinks(mesh)
+
         mesh.update()
         return mesh
 
+    def setRoomLinks(self, mesh):
+        #if len(self.roomlinks) < 1:
+        #    return
+        if not 'RoomLinks' in mesh.vertex_colors:
+            room_vert_colors = mesh.vertex_colors.new('RoomLinks')
+        else:
+            room_vert_colors = mesh.vertex_colors['RoomLinks']
+        for link in self.roomlinks:
+            # edge indices don't really match up, but face order does
+            faceIdx = int(link[0] / 3)
+            edgeIdx = link[0] % 3
+            room_color = [ 0.0 / 255, (200 + link[1]) / 255.0, 0.0 / 255 ]
+            realIdx = 0
+            for face_idx, face in enumerate(mesh.polygons):
+            #for idx in range(0, faceIdx - 1):
+                #if mesh.polygons[faceIdx].material_index == 7:
+                if face.material_index != 7:
+                    if realIdx == faceIdx:
+                        faceIdx = face_idx
+                        break
+                    else:
+                        realIdx += 1
+            face = mesh.polygons[faceIdx]
+            print(face.edge_keys)
+            for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                #if vert_idx in mesh.edges[link[0]].vertices:
+                if vert_idx in face.edge_keys[edgeIdx]:
+                    room_vert_colors.data[loop_idx].color = room_color
+
+    def getRoomLinks(self, mesh):
+        """Construct list of room links from vertex colors, for wok files"""
+        if not 'RoomLinks' in mesh.vertex_colors:
+            return
+        room_vert_colors = mesh.vertex_colors['RoomLinks']
+        #roomlinks = []
+        self.roomlinks = []
+        face_bonus = 0
+        for face_idx, face in enumerate(mesh.polygons):
+            verts = []
+            # when the wok is compiled, these faces will be sorted past
+            # the walkable faces, so take the index delta into account
+            if face.material_index == 7:
+                face_bonus -= 1
+                continue
+            for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                room = int(round(room_vert_colors.data[loop_idx].color[1] * 255, 0)) - 200
+                # we use color space for links to 55 rooms,
+                # which is likely more than the game could handle
+                if room < 0 or room > 54:
+                    continue
+                verts.append(vert_idx)
+                print(room)
+            if len(verts) < 2:
+                continue
+            for edge_idx, edge in enumerate(face.edge_keys):
+                if verts[0] in edge and verts[1] in edge:
+                    #roomlinks.append(((face_idx + face_bonus) * 3 + edge_idx, room))
+                    self.roomlinks.append(((face_idx + face_bonus) * 3 + edge_idx, room))
 
     def setObjectData(self, obj):
         GeometryNode.setObjectData(self, obj)
@@ -921,6 +990,12 @@ class Trimesh(GeometryNode):
                 formatString = '    {:3d} {:3d} {:3d}'
                 for f in faceList:
                     asciiLines.append(formatString.format(f[8], f[9], f[10]))
+
+        if self.roottype == 'wok' or self.nodetype == 'aabb':
+            if len(self.roomlinks):
+                asciiLines.append('  roomlinks ' + str(len(self.roomlinks)))
+                for link in self.roomlinks:
+                    asciiLines.append('    {:d} {:d}'.format(link[0], link[1]))
 
         bpy.data.meshes.remove(mesh)
 
