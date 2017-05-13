@@ -2,6 +2,7 @@
 importGeometry     = True
 importSmoothGroups = True
 importAnim         = True
+importWalkmesh     = True
 
 materialMode = 'SIN'
 
