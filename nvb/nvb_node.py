@@ -169,19 +169,19 @@ class GeometryNode():
         # Scaling fix
         transmat = self.getAdjustedMatrix(obj)
         loc = transmat.to_translation()
-        s = '  position {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
+        s = '  position {: .7g} {: .7g} {: .7g}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
         asciiLines.append(s)
 
         rot = nvb_utils.euler2nwangle(transmat.to_euler('XYZ'))
-        s = '  orientation {: 8.7f} {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
+        s = '  orientation {: .7g} {: .7g} {: .7g} {: .7g}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
         asciiLines.append(s)
         '''
         loc = obj.location
-        s = '  position {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
+        s = '  position {: .7g} {: .7g} {: .7g}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
         asciiLines.append(s)
 
         rot = nvb_utils.getAuroraRotFromObject(obj)
-        s = '  orientation {: 8.7f} {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
+        s = '  orientation {: .7g} {: .7g} {: .7g} {: .7g}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
         asciiLines.append(s)
         '''
         color = obj.nvb.wirecolor
@@ -255,19 +255,19 @@ class Dummy(GeometryNode):
         # Scaling fix
         transmat = self.getAdjustedMatrix(obj)
         loc = transmat.to_translation()
-        s = '  position {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
+        s = '  position {: .7g} {: .7g} {: .7g}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
         asciiLines.append(s)
 
         rot = nvb_utils.euler2nwangle(transmat.to_euler('XYZ'))
-        s = '  orientation {: 8.7f} {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
+        s = '  orientation {: .7g} {: .7g} {: .7g} {: .7g}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
         asciiLines.append(s)
         '''
         loc = obj.location
-        s = '  position {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
+        s = '  position {: .7g} {: .7g} {: .7g}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
         asciiLines.append(s)
 
         rot = nvb_utils.getAuroraRotFromObject(obj)
-        s = '  orientation {: 8.7f} {: 8.7f} {: 8.7f} {: 8.7f}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
+        s = '  orientation {: .7g} {: .7g} {: .7g} {: .7g}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
         asciiLines.append(s)
         '''
 
@@ -802,7 +802,7 @@ class Trimesh(GeometryNode):
         # Add vertices
         asciiLines.append('  verts ' + str(len(mesh.vertices)))
         l_round = round
-        formatString = '    {: 8.7f} {: 8.7f} {: 8.7f}'
+        formatString = '    {: .7g} {: .7g} {: .7g}'
         for v in mesh.vertices:
             s = formatString.format(l_round(v.co[0], 7), l_round(v.co[1], 7), l_round(v.co[2], 7))
             asciiLines.append(s)
@@ -874,14 +874,14 @@ class Trimesh(GeometryNode):
 
             if (len(uvList) > 0):
                 asciiLines.append('  tverts ' + str(len(uvList)))
-                formatString = '    {: 6.7f} {: 6.7f}'
+                formatString = '    {: .7g} {: .7g}'
                 for uv in uvList:
                     s = formatString.format(round(uv[0], 7), round(uv[1], 7))
                     asciiLines.append(s)
 
             if (len(uvListLM) > 0):
                 asciiLines.append('  tverts1 ' + str(len(uvListLM)))
-                formatString = '    {: 6.7f} {: 6.7f} 0'
+                formatString = '    {: .7g} {: .7g} 0'
                 for uv in uvListLM:
                     s = formatString.format(round(uv[0], 7), round(uv[1], 7))
                     asciiLines.append(s)
