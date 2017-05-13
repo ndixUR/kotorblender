@@ -44,6 +44,10 @@ class GeometryNode():
         # Name of the corresponding object in blender
         # (used to resolve naming conflicts)
         self.objref   = ''
+        # Parsed lines (by number), allow last parser to include unhandled data
+        self.parsed_lines = [];
+        self.rawascii         = '' # unprocessed directives
+
 
 
     def __eq__(self, other):
@@ -81,7 +85,7 @@ class GeometryNode():
         l_float = float
         l_isNumber = nvb_utils.isNumber
 
-        for line in asciiNode:
+        for index, line in enumerate(asciiNode):
             try:
                 label = line[0].lower()
             except IndexError:
@@ -91,25 +95,32 @@ class GeometryNode():
             if not l_isNumber(label):
                 if (label == 'node'):
                     self.name = nvb_utils.getName(line[2])
+                    self.parsed_lines.append(index)
                 elif (label == 'endnode'):
+                    self.parsed_lines.append(index)
                     return
                 elif (label == 'parent'):
                     self.parentName = nvb_utils.getName(line[1])
+                    self.parsed_lines.append(index)
                 elif (label == 'position'):
                     self.position = (l_float(line[1]),
                                      l_float(line[2]),
                                      l_float(line[3]))
+                    self.parsed_lines.append(index)
                 elif (label == 'orientation'):
                     self.orientation = (l_float(line[1]),
                                         l_float(line[2]),
                                         l_float(line[3]),
                                         l_float(line[4]))
+                    self.parsed_lines.append(index)
                 elif (label == 'scale'):
                     self.scale = l_float(line[1])
+                    self.parsed_lines.append(index)
                 elif (label == 'wirecolor'):
                     self.wirecolor = (l_float(line[1]),
                                       l_float(line[2]),
                                       l_float(line[3]))
+                    self.parsed_lines.append(index)
 
     def setObjectData(self, obj):
         self.objref = obj.name  # used to resolve naming conflicts
@@ -117,6 +128,12 @@ class GeometryNode():
         obj.scale         = (self.scale, self.scale, self.scale)
         obj.location      = self.position
         obj.nvb.wirecolor = self.wirecolor
+        # add unprocessed data as text objects
+        if (len(self.rawascii)):
+            txt = bpy.data.texts.new(obj.name)
+            txt.write(self.rawascii)
+            obj.nvb.rawascii = txt.name
+
 
     def addToScene(self, scene):
         obj = bpy.data.objects.new(self.name, None)
@@ -175,10 +192,20 @@ class GeometryNode():
         if (scale != 1.0):
             asciiLines.append('  scale ' + str(scale))
 
+        # Write out the unprocessed data
+        if obj.nvb.rawascii:
+            asciiLines.append('  ' + '\n  '.join(bpy.data.texts[obj.nvb.rawascii].as_string().strip().split('\n')))
+
     def toAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
         asciiLines.append('node ' + self.nodetype + ' ' + obj.name)
         self.addDataToAscii(obj, asciiLines, exportObjects, classification, simple)
         asciiLines.append('endnode')
+
+    def addUnparsedToRaw(self, asciiNode):
+        for idx, line in enumerate(asciiNode):
+            if idx in self.parsed_lines or not len(''.join(line).strip()):
+                continue
+            self.rawascii += '\n' + ' '.join(line)
 
 
 class Dummy(GeometryNode):
@@ -373,68 +400,92 @@ class Trimesh(GeometryNode):
             if not l_isNumber(label):
                 if (label == 'tilefade'):
                     self.tilefade = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'render'):
                     self.render = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'shadow'):
                     self.shadow = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'lightmapped'):
                     self.lightmapped = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'beaming'):
                     self.beaming = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'inheritcolor '):
                     self.inheritcolor = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'rotatetexture'):
                     self.rotatetexture = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'alpha'):
                     self.alpha = l_float(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'transparencyhint'):
                     self.transparencyhint = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'selfillumcolor'):  # Self illumination color
                     self.selfillumcolor = (l_float(line[1]),
                                            l_float(line[2]),
                                            l_float(line[3]))
+                    self.parsed_lines.append(idx)
                 elif (label == 'ambient'):
                     self.ambient = (l_float(line[1]),
                                     l_float(line[2]),
                                     l_float(line[3]))
+                    self.parsed_lines.append(idx)
                 elif (label == 'diffuse'):
                     self.diffuse = (l_float(line[1]),
                                     l_float(line[2]),
                                     l_float(line[3]))
+                    self.parsed_lines.append(idx)
                 elif (label == 'specular'):
                     self.specular = (l_float(line[1]),
                                      l_float(line[2]),
                                      l_float(line[3]))
+                    self.parsed_lines.append(idx)
                 elif (label == 'shininess'):
                     self.shininess = l_int(l_float(line[1]))
+                    self.parsed_lines.append(idx)
                 elif (label == 'center'):
                     # Unused ? Becuase we don't do anything with this
                     try:
                         self.center = (l_float(line[1]),
                                        l_float(line[2]),
                                        l_float(line[3]))
+                        self.parsed_lines.append(idx)
                     except:
                         # Probably an 'undefined' string which cannot be
                         # converted to float
                         pass
                 elif (label == 'bitmap'):
                     self.bitmap = line[1]
+                    self.parsed_lines.append(idx)
                 elif (label == 'bitmap2'):
                     self.bitmap2 = line[1]
+                    self.parsed_lines.append(idx)
                 elif (label == 'verts'):
                     numVals = l_int(line[1])
                     nvb_parse.f3(asciiNode[idx+1:idx+numVals+1], self.verts)
                     #self.verts = [(float(l[0]), float(l[1]), float(l[2])) for l in asciiNode[idx+1:idx+numVals+1]]
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
                 elif (label == 'faces'):
                     numVals = l_int(line[1])
                     self.parseFaceList(asciiNode[idx+1:idx+numVals+1])
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
                 elif (label == 'tverts'):
                     numVals = l_int(line[1])
                     nvb_parse.f2(asciiNode[idx+1:idx+numVals+1], self.tverts)
                     #self.tverts = [(float(l[0]), float(l[1])) for l in asciiNode[idx+1:idx+numVals+1]]
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
                 elif (label == 'tverts1'):
                     numVals = l_int(line[1])
                     nvb_parse.f2(asciiNode[idx+1:idx+numVals+1], self.tverts1)
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
+        if (self.nodetype == 'trimesh'):
+            self.addUnparsedToRaw(asciiNode)
+
 
     def parseFaceList(self, asciiFaces):
         l_int = int
@@ -903,14 +954,20 @@ class Danglymesh(Trimesh):
             if not l_isNumber(label):
                 if   (label == 'period'):
                     self.period = l_float(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'tightness'):
                     self.tightness = l_float(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'displacement'):
                     self.displacement = l_float(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'constraints'):
                     numVals = l_int(line[1])
                     nvb_parse.f1(asciiNode[idx+1:idx+numVals+1], self.constraints)
                     #self.constraints = [float(l[0]) for l in asciiNode[idx+1:idx+numVals+1]]
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
+        if (self.nodetype == 'danglymesh'):
+            self.addUnparsedToRaw(asciiNode)
 
     def addConstraintsToObject(self, obj):
         '''
@@ -982,7 +1039,10 @@ class Skinmesh(Trimesh):
                 if (label == 'weights'):
                     numVals = l_int(line[1])
                     self.getWeightsFromAscii(asciiNode[idx+1:idx+numVals+1])
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
                     break  # Only one value here, abort loop when read
+        if (self.nodetype == 'skin'):
+            self.addUnparsedToRaw(asciiNode)
 
 
     def getWeightsFromAscii(self, asciiBlock):
@@ -1081,34 +1141,27 @@ class Emitter(GeometryNode):
             if not l_isNumber(label):
                 if (label == 'node'):
                     self.name = nvb_utils.getName(line[2])
-                    self.rawascii = self.rawascii + '\n' + ' '.join(line)
                 elif (label == 'endnode'):
-                    self.rawascii = self.rawascii + '\n' + ' '.join(line)
                     return
                 elif (label == 'parent'):
                     self.parentName = nvb_utils.getName(line[1])
-                    self.rawascii = self.rawascii + '\n  #' + ' '.join(line)
                 elif (label == 'position'):
                     self.position = (l_float(line[1]),
                                      l_float(line[2]),
                                      l_float(line[3]))
-                    self.rawascii = self.rawascii + '\n  #' + ' '.join(line)
                 elif (label == 'orientation'):
                     self.orientation = (l_float(line[1]),
                                         l_float(line[2]),
                                         l_float(line[3]),
                                         l_float(line[4]))
-                    self.rawascii = self.rawascii + '\n  #' + ' '.join(line)
                 elif (label == 'scale'):
                     self.scale = l_float(line[1])
-                    self.rawascii = self.rawascii + '\n  #' + ' '.join(line)
                 elif (label == 'wirecolor'):
                     self.wirecolor = (l_float(line[1]),
                                       l_float(line[2]),
                                       l_float(line[3]))
-                    self.rawascii = self.rawascii + '\n  #' + ' '.join(line)
                 else:
-                    self.rawascii = self.rawascii + '\n  ' + ' '.join(line)
+                    self.rawascii += '\n  ' + ' '.join(line)
 
     def createMesh(self, objName):
         # Create the mesh itself
@@ -1138,7 +1191,7 @@ class Emitter(GeometryNode):
         GeometryNode.setObjectData(self, obj)
 
         obj.nvb.meshtype = self.meshtype
-        self.addRawAscii(obj)
+        #self.addRawAscii(obj)
 
 
     def addToScene(self, scene):
@@ -1158,6 +1211,8 @@ class Emitter(GeometryNode):
     def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
         GeometryNode.addDataToAscii(self, obj, asciiLines, exportObjects, classification, simple)
 
+        return
+        # this is now handled by geometry node class...
         if obj.nvb.rawascii not in bpy.data.texts:
             print('Neverblender - WARNING: No emitter data for ' + obj.name)
             return
@@ -1221,52 +1276,69 @@ class Light(GeometryNode):
             if not l_isNumber(label):
                 if (label == 'radius'):
                     self.radius = l_float(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'shadow'):
                     self.shadow = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'multiplier'):
                     self.multiplier = l_float(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'color'):
                     self.color = (l_float(line[1]),
                                   l_float(line[2]),
                                   l_float(line[3]))
+                    self.parsed_lines.append(idx)
                 elif (label == 'ambientonly'):
                     self.ambientonly = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'ndynamictype'):
                     self.ndynamictype = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'isdynamic'):
                     self.isdynamic = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'affectdynamic'):
                     self.affectdynamic = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'negativelight'):
                     self.negativelight = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'lightpriority'):
                     self.lightpriority = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'fadinglight'):
                     self.fadinglight = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'lensflares'):
                     self.lensflares = l_int(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'flareradius'):
                     self.flareradius = l_float(line[1])
+                    self.parsed_lines.append(idx)
                 elif (label == 'texturenames'):
                     # List of names follows, but we don't necessarily know how
                     # many flares there are
                     # We 'll need to read them later. For now save the index
                     flareTextureNamesStart = idx+1
+                    self.parsed_lines.append(idx)
                 elif (label == 'flaresizes'):
                     # List of floats
                     numVals = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
                     nvb_parse.f1(asciiNode[idx+1:idx+numVals+1], self.flareList.sizes)
                     #self.flareList.sizes = [float(l[0]) for l in asciiNode[idx+1:idx+numVals+1]]
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
                 elif (label == 'flarepositions'):
                     # List of floats
                     numVals = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
                     nvb_parse.f1(asciiNode[idx+1:idx+numVals+1], self.flareList.positions)
                     #self.flareList.positions = [float(l[0]) for l in asciiNode[idx+1:idx+numVals+1]]
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
                 elif (label == 'flarecolorshifts'):
                     # List of float 3-tuples
                     numVals = next((i for i, v in enumerate(asciiNode[idx+1:]) if not l_isNumber(v[0])), -1)
                     nvb_parse.f3(asciiNode[idx+1:idx+numVals+1], self.flareList.colorshifts)
                     #self.flareList.colorshifts = [(float(l[0]), float(l[1]), float(l[2])) for l in asciiNode[idx+1:idx+numVals+1]]
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
 
         # Load flare texture names:
         numFlares = min(len(self.flareList.sizes),
@@ -1275,6 +1347,10 @@ class Light(GeometryNode):
         for i in range(numFlares):
             texName = asciiNode[flareTextureNamesStart+i][0]
             self.flareList.textures.append(texName)
+            self.parsed_lines.append(flareTextureNamesStart+i)
+
+        if (self.nodetype == 'light'):
+            self.addUnparsedToRaw(asciiNode)
 
     def createLamp(self, name):
         lamp = bpy.data.lamps.new(name, 'POINT')
