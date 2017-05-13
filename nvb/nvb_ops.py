@@ -163,7 +163,7 @@ class NVB_LIST_OT_AnimEvent_Move(bpy.types.Operator):
         return{'FINISHED'}
 
 
-class MdlImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+class NVB_OP_Import(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     '''Import Odyssey Engine model (.mdl)'''
 
     bl_idname  = 'nvb.mdlimport'
@@ -232,7 +232,7 @@ class MdlImport(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         return nvb_io.loadMdl(self, context, **keywords)
 
 
-class MdlExport(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+class NVB_OP_Export(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     '''Export Odyssey Engine model (.mdl)'''
 
     bl_idname = 'nvb.mdlexport'

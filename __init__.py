@@ -33,6 +33,8 @@ bl_info = {
 
 if 'bpy' in locals():
     import importlib
+    importlib.reload(nvb_def)
+    importlib.reload(nvb_utils)
     importlib.reload(nvb_io)
     importlib.reload(nvb_mdl)
     importlib.reload(nvb_node)
@@ -43,6 +45,8 @@ if 'bpy' in locals():
     importlib.reload(nvb_ops)
     importlib.reload(nvb_ui)
 else:
+    from .nvb import nvb_def
+    from .nvb import nvb_utils
     from .nvb import nvb_io
     from .nvb import nvb_mdl
     from .nvb import nvb_node
@@ -54,15 +58,15 @@ else:
     from .nvb import nvb_ui
 
 import bpy
-import bpy_extras
+#import bpy_extras
 
 
 def menu_func_export(self, context):
-    self.layout.operator(nvb_ops.MdlExport.bl_idname, text="Odyssey (KotOR) (.mdl)")
+    self.layout.operator(nvb_ops.NVB_OP_Export.bl_idname, text="Odyssey (KotOR) (.mdl)")
 
 
 def menu_func_import(self, context):
-    self.layout.operator(nvb_ops.MdlImport.bl_idname, text="Odyssey (KotOR) (.mdl)")
+    self.layout.operator(nvb_ops.NVB_OP_Import.bl_idname, text="Odyssey (KotOR) (.mdl)")
 
 
 def register():
