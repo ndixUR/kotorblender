@@ -552,8 +552,29 @@ class Trimesh(GeometryNode):
         mesh.tessfaces.add(len(self.facelist.faces))
         mesh.tessfaces.foreach_set('vertices_raw', unpack_face_list(self.facelist.faces))
 
+        # Special handling for mesh in walkmesh files
+        if self.roottype in ['pwk', 'dwk', 'wok']:
+            # Create walkmesh materials
+            for wokMat in nvb_def.wok_materials:
+                matName = wokMat[0]
+                # Walkmesh materials will be shared across multiple walkmesh
+                # objects
+                if matName in bpy.data.materials:
+                    material = bpy.data.materials[matName]
+                else:
+                    material = bpy.data.materials.new(matName)
+                    material.diffuse_color      = wokMat[1]
+                    material.diffuse_intensity  = 1.0
+                    material.specular_color     = (0.0,0.0,0.0)
+                    material.specular_intensity = wokMat[2]
+                mesh.materials.append(material)
+
+            # Apply the walkmesh materials to each face
+            for idx, face in enumerate(mesh.tessfaces):
+                face.material_index = self.facelist.matId[idx]
+
         # Create material
-        if nvb_glob.materialMode != 'NON':
+        if nvb_glob.materialMode != 'NON' and self.roottype == 'mdl':
             material = self.createMaterial(name, self.bitmap)
             mesh.materials.append(material)
 
