@@ -176,7 +176,7 @@ class Mdl():
 
                 elif (label == 'classification'):
                     try:
-                        self.classification = line[1].upper()
+                        self.classification = line[1].title()
                     except IndexError:
                         print("Neverblender - WARNING: Unable to read classification. Default value " + self.classification)
 
