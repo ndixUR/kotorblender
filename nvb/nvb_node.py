@@ -1019,6 +1019,7 @@ class Trimesh(GeometryNode):
 
             asciiLines.append('  render ' + str(int(obj.nvb.render)))
             asciiLines.append('  shadow ' + str(int(obj.nvb.shadow)))
+            asciiLines.append('  lightmapped ' + str(int(obj.nvb.lightmapped)))
             asciiLines.append('  beaming ' + str(int(obj.nvb.beaming)))
             asciiLines.append('  inheritcolor ' + str(int(obj.nvb.inheritcolor)))
             asciiLines.append('  transparencyhint ' + str(obj.nvb.transparencyhint))
