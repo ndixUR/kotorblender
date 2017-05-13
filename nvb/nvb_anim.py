@@ -114,7 +114,7 @@ class Animation():
                         data.name = animDataName
                     theCopy.data = data
                 elif (objType == 'MESH'):
-                    if animNode.requiresUniqueData():
+                    if animNode is not None and animNode.requiresUniqueData():
                         # We need to copy the material and therefore the data block
                         data         = theOriginal.data.copy()
                         data.name    = theOriginal.name + '.' + self.name
