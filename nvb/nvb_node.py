@@ -138,8 +138,12 @@ class GeometryNode():
 
 
     def addToScene(self, scene):
-        obj = bpy.data.objects.new(self.name, None)
-        self.setObjectData(obj)
+        if self.name in bpy.data.objects:
+            obj = bpy.data.objects[self.name]
+            scene.objects.unlink(obj)
+        else:
+            obj = bpy.data.objects.new(self.name, None)
+            self.setObjectData(obj)
         scene.objects.link(obj)
         return obj
 

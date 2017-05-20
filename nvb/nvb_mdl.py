@@ -76,7 +76,7 @@ class Mdl():
         if newNode:
             key = newNode.parentName + newNode.name
             if key in self.nodeDict:
-                print('Neverblender - WARNING: Node name conflict.')
+                print('Neverblender - WARNING: Node name conflict ' + key + '.')
             else:
                 self.nodeDict[key] = newNode
 
@@ -118,7 +118,14 @@ class Mdl():
                     raise nvb_def.MalformedMdlFile(node.name + ' has no parent.')
                 else:
                     # Check if such an object exists
-                    if node.parentName in bpy.data.objects:
+                    if obj.parent is not None:
+                        print("WARNING: Node already parented: {}".format(obj.name))
+                        pass
+                    elif node.parentName in bpy.data.objects and node.parentName == rootDummy.name:
+                        #print(obj.name + ' child of root')
+                        obj.parent = bpy.data.objects[node.parentName]
+                    elif node.parentName in bpy.data.objects:
+                        #print(obj.name + ' NOT child of root')
                         obj.parent                = bpy.data.objects[node.parentName]
                         obj.matrix_parent_inverse = obj.parent.matrix_world.inverted()
                     else:
