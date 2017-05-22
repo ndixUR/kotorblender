@@ -4,7 +4,76 @@ import bpy_extras
 from . import nvb_def
 from . import nvb_utils
 from . import nvb_io
+from . import nvb_txi
 
+class NVBTEXTURE_IO(bpy.types.Operator):
+    bl_idname = "nvb.texture_info_io"
+    bl_label = "Texture Info"
+    bl_property = 'action'
+    bl_options = {'UNDO'}
+
+    action = bpy.props.EnumProperty(items=(
+        ('LOAD', 'Load', 'Import TXI file for this texture'),
+        ('SAVE', 'Save', 'Export TXI file for this texture')
+    ))
+
+    def execute(self, context):
+        if self.action == 'SAVE':
+            nvb_txi.saveTxi(context.object.active_material.active_texture, self)
+            #if nvb_txi.saveTxi(context.object.active_material.active_texture):
+            #    self.report({'INFO'}, 'Successfully saved TXI file')
+        else:
+            nvb_txi.loadTxi(context.object.active_material.active_texture, self)
+            #if nvb_txi.loadTxi(context.object.active_material.active_texture):
+            #    self.report({'INFO'}, 'Successfully loaded TXI file')
+        return {'FINISHED'}
+
+class NVBTEXTURE_BOX_OPS(bpy.types.Operator):
+    ''' Hide/show Texture Info sub-groups'''
+    bl_idname = "nvb.texture_info_box_ops"
+    bl_label = "Box Controls"
+    bl_description = "Show/hide this property list"
+
+    boxname = bpy.props.StringProperty(default='')
+
+    def execute(self, context):
+        if self.boxname == '':
+            return {'FINISHED'}
+        attrname = 'box_visible_' + self.boxname
+        texture = context.object.active_material.active_texture
+        current_state = getattr(texture.nvb, attrname)
+        setattr(texture.nvb, attrname, not current_state)
+        return {'FINISHED'}
+
+class NVBTEXTURE_OPS(bpy.types.Operator):
+    bl_idname = "nvb.texture_info_ops"
+    bl_label = "Texture Info Operations"
+    bl_property = 'action'
+    bl_options = {'UNDO'}
+
+    action = bpy.props.EnumProperty(items=(
+        ('RESET', 'Reset', 'Reset the property to default value. This will prevent it from being written to TXI file output.'),
+        ('NYI', 'Other', '')
+    ))
+    propname = bpy.props.StringProperty(default='')
+
+    def execute(self, context):
+        if self.propname == '':
+            return {'FINISHED'}
+        if self.action == 'RESET':
+            #print(bpy.types.ImageTexture.nvb)
+            #print(bpy.types.ImageTexture.nvb[1])
+            #print(bpy.types.ImageTexture.nvb[1]['type'])
+            #print(bpy.types.ImageTexture.nvb[1]['type'][self.propname])
+            #print(getattr(bpy.types.ImageTexture.nvb[1]['type'], self.propname))
+            #print(getattr(bpy.types.ImageTexture.nvb[1]['type'], self.propname)[1])
+            #print(getattr(bpy.types.ImageTexture.nvb[1]['type'], self.propname)[1]['default'])
+            #print(getattr(bpy.types.ImageTexture.nvb[1], self.propname)[1]['default'])
+            #attr_def = getattr(bpy.types.ImageTexture.nvb[1], self.propname)[1]['default']
+            attr_def = getattr(bpy.types.ImageTexture.nvb[1]['type'], self.propname)[1]
+            if 'default' in attr_def:
+                setattr(context.object.active_material.active_texture.nvb, self.propname, attr_def['default'])
+        return {'FINISHED'}
 
 class NVB_LIST_OT_LightFlare_New(bpy.types.Operator):
     ''' Add a new item to the flare list '''
@@ -257,6 +326,13 @@ class NVB_OP_Export(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
             name='Export Smooth groups',
             description='Generate smooth groups from sharp edges' \
                         '(When disabled every face belongs to the same group)',
+            default=True,
+            )
+
+    exportTxi = bpy.props.BoolProperty(
+            name='Export TXI files',
+            description='Create TXI files containing the texture properties' \
+                        '(When disabled, TXI files can be exported manually)',
             default=True,
             )
 

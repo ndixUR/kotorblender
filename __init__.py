@@ -73,6 +73,7 @@ def register():
     bpy.utils.register_module(__name__)
 
     bpy.types.Object.nvb = bpy.props.PointerProperty(type=nvb_props.NVB_PG_OBJECT)
+    bpy.types.ImageTexture.nvb = bpy.props.PointerProperty(type=nvb_props.NVB_PG_TEXTURE)
 
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
@@ -83,6 +84,7 @@ def unregister():
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
 
     del bpy.types.Object.nvb
+    del bpy.types.ImageTexture.nvb
 
     bpy.utils.unregister_module(__name__)
 

@@ -10,6 +10,7 @@ from . import nvb_def
 from . import nvb_utils
 from . import nvb_aabb
 from . import nvb_parse
+from . import nvb_txi
 
 class FaceList():
     def __init__(self):
@@ -369,6 +370,7 @@ class Trimesh(GeometryNode):
         self.shininess        = 0
         self.bitmap           = nvb_def.null
         self.bitmap2          = nvb_def.null
+        self.tangentspace     = 0
         self.rotatetexture    = 0
         self.verts            = [] # list of vertices
         self.facelist         = FaceList()
@@ -423,6 +425,9 @@ class Trimesh(GeometryNode):
                     self.parsed_lines.append(idx)
                 elif (label == 'inheritcolor '):
                     self.inheritcolor = l_int(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'tangentspace'):
+                    self.tangentspace = l_int(line[1])
                     self.parsed_lines.append(idx)
                 elif (label == 'rotatetexture'):
                     self.rotatetexture = l_int(line[1])
@@ -551,6 +556,9 @@ class Trimesh(GeometryNode):
                     image = self.createImage(imgName, nvb_glob.texturePath)
                     if image is not None:
                         textureSlot.texture.image = image
+                if self.tangentspace == 1:
+                    textureSlot.texture.nvb.bumpmapped = True
+                nvb_txi.loadTxi(textureSlot.texture)
 
             nvb_utils.setMaterialAuroraAlpha(material, self.alpha)
 
@@ -819,10 +827,15 @@ class Trimesh(GeometryNode):
                 # Only image textures will be exported
                 if (texture.type == 'IMAGE') and (texture.image):
                     imgName = nvb_utils.getImageFilename(texture.image)
+                    if nvb_glob.exportTxi and not texture.nvb.exported_in_save:
+                        nvb_txi.saveTxi(texture)
+                        # set this to prevent multiple export of TXI in mdl save
+                        texture.nvb.exported_in_save = True
                 else:
                     imgName = nvb_def.null
             asciiLines.append('  bitmap ' + imgName)
             asciiLines.append('  alpha ' + str(round(nvb_utils.getAuroraAlpha(obj), 2)))
+            asciiLines.append('  tangentspace ' + str(int(texture.nvb.bumpmapped)))
             # Test for lightmap assigned as second texture
             if material.texture_slots[1]:
                 texture  = material.texture_slots[1].texture
@@ -840,6 +853,7 @@ class Trimesh(GeometryNode):
             asciiLines.append('  specular 0.0 0.0 0.0')
             asciiLines.append('  alpha 1.0')
             asciiLines.append('  bitmap ' + nvb_def.null)
+            asciiLines.append('  tangentspace 0')
 
 
     def addUVToList(self, uv, uvList, vert, vertList):

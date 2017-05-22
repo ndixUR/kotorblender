@@ -291,6 +291,11 @@ class Mdl():
         asciiLines.append('setsupermodel ' + self.name + ' ' + self.supermodel)
         asciiLines.append('classification ' + self.classification)
         asciiLines.append('setanimationscale ' + str(round(self.animscale, 2)))
+        #res = nvb_utils.searchNode(rootDummy, lambda o: o.active_material.active_texture.nvb.bumpmapped)
+        #if res is not None:
+        #    asciiLines.extend([
+        #        "", "bumpmapped_texture " + res.active_material.active_texture.name, ""
+        #    ])
         # Geometry
         asciiLines.append('beginmodelgeom ' + self.name)
         self.geometryToAscii(rootDummy, asciiLines, False)

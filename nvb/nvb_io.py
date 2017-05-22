@@ -120,6 +120,7 @@ def saveMdl(operator,
          filepath = '',
          exports = {'ANIMATION', 'WALKMESH'},
          exportSmoothGroups = True,
+         exportTxi = True,
          applyModifiers = True,
          ):
     '''
@@ -127,11 +128,21 @@ def saveMdl(operator,
     '''
     nvb_glob.exports            = exports
     nvb_glob.exportSmoothGroups = exportSmoothGroups
+    nvb_glob.exportTxi          = exportTxi
     nvb_glob.applyModifiers     = applyModifiers
     nvb_glob.scene              = bpy.context.scene
 
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode='OBJECT')
+
+    # reset exported status to false because save operation about to begin
+    if exportTxi:
+        for texture in bpy.data.textures:
+            try:
+                if texture.type == 'IMAGE' and texture.image:
+                    texture.nvb.exported_in_save = False
+            except:
+                pass
 
     mdlRoot = findRootDummy()
     if mdlRoot:
@@ -177,5 +188,13 @@ def saveMdl(operator,
                 wkmFilepath = os.path.join(wkmPath, os.path.splitext(wkmFilename)[0] + '.' + wkm.walkmeshType)
                 with open(os.fsencode(wkmFilepath), 'w') as f:
                     f.write('\n'.join(asciiLines))
+        # reset exported status to false because save operation is concluding
+        if exportTxi:
+            for texture in bpy.data.textures:
+                try:
+                    if texture.type == 'IMAGE' and texture.image:
+                        texture.nvb.exported_in_save = False
+                except:
+                    pass
 
     return {'FINISHED'}
