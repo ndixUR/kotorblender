@@ -7,7 +7,10 @@ def _f(asciiBlock, floatList, numVals):
         vals = []
         for idx in range(0, numVals):
             vals.append(l_float(line[idx]))
-        floatList.append(tuple(vals))
+        if len(vals) > 1:
+            floatList.append(tuple(vals))
+        else:
+            floatList.append(vals[0])
 
 def f1(asciiBlock, floatList):
     """Parse a series on floats into a list."""
