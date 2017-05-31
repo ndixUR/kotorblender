@@ -21,7 +21,55 @@ class Keys():
         # Lights/lamps
         self.color  = []
         self.radius = []
-        # Emitters ... incompatible. Import as text
+        # Emitters
+        self.alphastart = []
+        self.alphamid = []
+        self.alphaend = []
+        self.birthrate = []
+        self.m_frandombirthrate = []
+        self.bounce_co = []
+        self.combinetime = []
+        self.drag = []
+        self.fps = []
+        self.frameend = []
+        self.framestart = []
+        self.grav = []
+        self.lifeexp = []
+        self.mass = []
+        self.p2p_bezier2 = []
+        self.p2p_bezier3 = []
+        self.particlerot = []
+        self.randvel = []
+        self.sizestart = []
+        self.sizemid = []
+        self.sizeend = []
+        self.sizestart_y = []
+        self.sizemid_y = []
+        self.sizeend_y = []
+        self.spread = []
+        self.threshold = []
+        self.velocity = []
+        self.xsize = []
+        self.ysize = []
+        self.blurlength = []
+        self.lightningdelay = []
+        self.lightningradius = []
+        self.lightningsubdiv = []
+        self.lightningscale = []
+        self.lightningzigzag = []
+        self.percentstart = []
+        self.percentmid = []
+        self.percentend = []
+        self.targetsize = []
+        self.numcontrolpts = []
+        self.controlptradius = []
+        self.controlptdelay = []
+        self.tangentspread = []
+        self.tangentlength = []
+        self.colorstart = []
+        self.colormid = []
+        self.colorend = []
+        # Unknown. Import as text
         self.rawascii = ''
 
     def hasAlpha(self):
@@ -66,6 +114,209 @@ class Node():
             'objdata': 'distance',
             },
         }
+    EMITTER_KEY_TYPE = {
+        "alphaStart": {
+            "values": 1,
+            "axes": 1,
+        },
+        "alphaMid": {
+            "values": 1,
+            "axes": 1,
+        },
+        "alphaEnd": {
+            "values": 1,
+            "axes": 1,
+        },
+        "birthrate": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "m_fRandomBirthRate": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "bounce_co": {
+            "values": 1,
+            "axes": 1,
+        },
+        "combinetime": {
+            "values": 1,
+            "axes": 1,
+        },
+        "drag": {
+            "values": 1,
+            "axes": 1,
+        },
+        "fps": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "frameEnd": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "frameStart": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "grav": {
+            "values": 1,
+            "axes": 1,
+        },
+        "lifeExp": {
+            "values": 1,
+            "axes": 1,
+        },
+        "mass": {
+            "values": 1,
+            "axes": 1,
+        },
+        "p2p_bezier2": {
+            "values": 1,
+            "axes": 1,
+        },
+        "p2p_bezier3": {
+            "values": 1,
+            "axes": 1,
+        },
+        "particleRot": {
+            "values": 1,
+            "axes": 1,
+        },
+        "randvel": {
+            "values": 1,
+            "axes": 1,
+        },
+        "sizeStart": {
+            "values": 1,
+            "axes": 1,
+        },
+        "sizeMid": {
+            "values": 1,
+            "axes": 1,
+        },
+        "sizeEnd": {
+            "values": 1,
+            "axes": 1,
+        },
+        "sizeStart_y": {
+            "values": 1,
+            "axes": 1,
+        },
+        "sizeMid_y": {
+            "values": 1,
+            "axes": 1,
+        },
+        "sizeEnd_y": {
+            "values": 1,
+            "axes": 1,
+        },
+        "spread": {
+            "values": 1,
+            "axes": 1,
+        },
+        "threshold": {
+            "values": 1,
+            "axes": 1,
+        },
+        "velocity": {
+            "values": 1,
+            "axes": 1,
+        },
+        "xsize": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "ysize": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "blurlength": {
+            "values": 1,
+            "axes": 1,
+        },
+        "lightningDelay": {
+            "values": 1,
+            "axes": 1,
+        },
+        "lightningRadius": {
+            "values": 1,
+            "axes": 1,
+        },
+        "lightningSubDiv": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "lightningScale": {
+            "values": 1,
+            "axes": 1,
+        },
+        "lightningzigzag": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "percentStart": {
+            "values": 1,
+            "axes": 1,
+        },
+        "percentMid": {
+            "values": 1,
+            "axes": 1,
+        },
+        "percentEnd": {
+            "values": 1,
+            "axes": 1,
+        },
+        "targetsize": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "numcontrolpts": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "controlptradius": {
+            "values": 1,
+            "axes": 1,
+        },
+        "controlptdelay": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "tangentspread": {
+            "values": 1,
+            "axes": 1,
+            "conversion":int,
+        },
+        "tangentlength": {
+            "values": 1,
+            "axes": 1,
+        },
+        "colorStart": {
+            "values": 3,
+            "axes": 3,
+        },
+        "colorMid": {
+            "values": 3,
+            "axes": 3,
+        },
+        "colorEnd": {
+            "values": 3,
+            "axes": 3,
+        },
+    }
 
     def __init__(self, name = 'UNNAMED'):
         self.name       = name
@@ -177,6 +428,34 @@ class Node():
                 # parse numvals plus one for time
                 nvb_parse._f(subblock, getattr(self.keys, attrname), numVals + 1)
                 self.isEmpty = False
+            elif label in (attr.lower() for attr in self.EMITTER_KEY_TYPE.keys()) or \
+                 label in (attr.lower() + 'key' for attr in self.EMITTER_KEY_TYPE.keys()) or \
+                 label in (attr.lower() + 'bezierkey' for attr in self.EMITTER_KEY_TYPE.keys()):
+                # Parse all controllers: unkeyed, keyed, or bezierkeyed
+                attrname = [attr for attr in self.EMITTER_KEY_TYPE.keys() if attr.lower() in label][0]
+                propname = attrname.lower()
+                attr_type = self.EMITTER_KEY_TYPE[attrname]
+                key_type = ''
+                key_type = 'key' if label.endswith('key') else key_type
+                key_type = 'bezierkey' if label.endswith('bezierkey') else key_type
+                #print('found {}{} {:d} values'.format(attrname, key_type, attr_type['values']))
+                numVals = attr_type['values']
+                if key_type:
+                    if key_type == 'bezierkey':
+                        numVals *= 3
+                    numKeys = self.findEnd(asciiBlock[idx+1:])
+                    subblock = asciiBlock[idx+1:idx+numKeys+1]
+                else:
+                    numKeys = 1
+                    subblock = [[0.0] + line[1:]]
+                # parse numvals plus one for time
+                if 'conversion' in attr_type and attr_type['conversion'] is int:
+                    nvb_parse._i(subblock, getattr(self.keys, propname), numVals + 1)
+                    #print(getattr(self.keys, attrname))
+                else:
+                    nvb_parse._f(subblock, getattr(self.keys, propname), numVals + 1)
+                #print(attrname + ' ' + label)
+                self.isEmpty = False
             # Some unknown text.
             # Probably keys for emitters = incompatible with blender. Import as text.
             elif not l_isNumber(line[0]):
@@ -280,6 +559,26 @@ class Node():
                         self.addKeyframeToCurve(
                             curves[x], getattr(self.keys, attrname), index,
                             min(x + 1, key_type['values']), key_type['values'])
+        # test for all key types, if present, create timelines for them
+        for attrname in self.EMITTER_KEY_TYPE.keys():
+            propname = attrname.lower()
+            if not getattr(self.keys, propname):
+                continue
+            #print('emitter ' + propname)
+            key_type = self.EMITTER_KEY_TYPE[attrname]
+            curves = []
+            # one fcurve per 'axis' (xyz, rgb, etc.)
+            for x in range(0, key_type['axes']):
+                curves.append(action.fcurves.new(data_path='nvb.' + propname, index=x))
+            # handle each keyframe
+            for index, key in enumerate(getattr(self.keys, propname)):
+                frame = nvb_utils.nwtime2frame(key[0])
+                # handle each axis, matching values to curves
+                for x in range(0, key_type['axes']):
+                    # handle key/bezierkey for all types in addKeyframeToCurve
+                    self.addKeyframeToCurve(
+                        curves[x], getattr(self.keys, propname), index,
+                        min(x + 1, key_type['values']), key_type['values'])
 
         # Add imcompatible animations (emitters) as a text object
         if (self.keys.rawascii):
@@ -313,6 +612,11 @@ class Node():
                        dataPath == ktype['objdata']:
                         name = keyname + 'key'
                         break
+                for keyname in self.EMITTER_KEY_TYPE.keys():
+                    if dataPath == 'nvb.' + keyname.lower():
+                        ktype = self.EMITTER_KEY_TYPE[keyname]
+                        name = keyname + 'key'
+                        break
 
                 for kfp in fcurve.keyframe_points:
                     if kfp.interpolation == 'BEZIER':
@@ -329,6 +633,7 @@ class Node():
                     else:
                         values = [0.0, 0.0, 0.0, 0.0]
                     values[axis] = values[axis] + kfp.co[1]
+                    #print(values)
                     if name.endswith('bezierkey'):
                         if kfp.interpolation == 'BEZIER':
                             values[ktype['axes'] + (axis * 2):(ktype['axes'] + 1) + (axis * 2)] = \
@@ -429,6 +734,39 @@ class Node():
                     key = nvb_utils.euler2nwangle(mathutils.Euler((key[0:3]), 'XYZ'))
                 # export title and
                 line = '      {: .7g}' + (' {: .7g}' * ktype['values'])
+                s = line.format(time, *key[0:ktype['values']])
+                # export bezierkey control points
+                if keyname == bezname:
+                    # left control point(s)
+                    s += (' {: .7g}' * ktype['values']).format(*key[ktype['axes']::2])
+                    # right control point(s)
+                    s += (' {: .7g}' * ktype['values']).format(*key[ktype['axes'] + 1::2])
+                asciiLines.append(s)
+        for attrname in self.EMITTER_KEY_TYPE.keys():
+            bezname = attrname + 'bezierkey'
+            keyname = attrname + 'key'
+            if (bezname not in keyDict or not len(keyDict[bezname])) and \
+               (keyname not in keyDict or not len(keyDict[keyname])):
+                continue
+            ktype = self.EMITTER_KEY_TYPE[attrname]
+            # using a bezierkey
+            if bezname in keyDict and len(keyDict[bezname]):
+                keyname = bezname
+            asciiLines.append('    {} {}'.format(keyname, l_str(len(keyDict[keyname]))))
+            for frame, key in keyDict[keyname].items():
+                time = l_round(nvb_utils.frame2nwtime(frame), 5)
+                # orientation value conversion
+                # export title and
+                value_str = " {: .7g}"
+                if "conversion" in ktype and ktype["conversion"] is int:
+                    #print(attrname)
+                    #print(key)
+                    #print(ktype)
+                    value_str = " {: d}"
+                    key[0:ktype['values']] = [int(k) for k in key[0:ktype['values']]]
+                    #print('converted')
+                    #print(key)
+                line = '      {: .7g}' + (value_str * ktype['values'])
                 s = line.format(time, *key[0:ktype['values']])
                 # export bezierkey control points
                 if keyname == bezname:
