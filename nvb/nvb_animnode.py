@@ -383,7 +383,7 @@ class Node():
         search for the first non-numeric value
         '''
         l_isNumber = nvb_utils.isNumber
-        return next((i for i, v in enumerate(asciiBlock) if not l_isNumber(v[0])), -1)
+        return next((i for i, v in enumerate(asciiBlock) if len(v) and not l_isNumber(v[0])), -1)
 
     def loadAscii(self, asciiBlock):
         l_float    = float
