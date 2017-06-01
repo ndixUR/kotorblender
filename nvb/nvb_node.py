@@ -36,6 +36,7 @@ class GeometryNode():
         self.nodetype = 'undefined'
 
         self.roottype = 'mdl'
+        self.rootname = 'undefined'
 
         self.name        = name
         self.parentName  = nvb_def.null
@@ -139,7 +140,10 @@ class GeometryNode():
 
 
     def addToScene(self, scene):
-        if self.name in bpy.data.objects:
+        if self.name in bpy.data.objects and \
+           nvb_utils.ancestorNode(bpy.data.objects[self.name],
+                                  nvb_utils.isRootDummy).name == self.rootname:
+            # name and root dummy name match, use existing object
             obj = bpy.data.objects[self.name]
             scene.objects.unlink(obj)
         else:

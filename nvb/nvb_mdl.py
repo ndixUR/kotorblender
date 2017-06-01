@@ -54,6 +54,9 @@ class Mdl():
         if isinstance(self, Xwk):
             node.roottype = self.walkmeshType
 
+        # tell the node what model it is part of
+        node.rootname = self.name
+
         node.loadAscii(asciiBlock)
         self.addNode(node)
 
@@ -121,16 +124,30 @@ class Mdl():
                     if obj.parent is not None:
                         print("WARNING: Node already parented: {}".format(obj.name))
                         pass
-                    elif node.parentName in bpy.data.objects and node.parentName == rootDummy.name:
-                        #print(obj.name + ' child of root')
+                    elif node.parentName in bpy.data.objects and \
+                         nvb_utils.ancestorNode(bpy.data.objects[node.parentName],
+                                                nvb_utils.isRootDummy).name == self.name:
+                        # parent named node exists and is under a root dummy
+                        # that shares our model's name, so use it.
                         obj.parent = bpy.data.objects[node.parentName]
-                    elif node.parentName in bpy.data.objects:
-                        #print(obj.name + ' NOT child of root')
-                        obj.parent                = bpy.data.objects[node.parentName]
-                        obj.matrix_parent_inverse = obj.parent.matrix_world.inverted()
+                        if node.parentName != self.name:
+                            # child of non-root, preserve orientation
+                            obj.matrix_parent_inverse = obj.parent.matrix_world.inverted()
                     else:
+                        found = False
+                        for altname in [node.parentName + '.{:03d}'.format(i) for i in range(1,20)]:
+                            if altname in bpy.data.objects and \
+                               nvb_utils.ancestorNode(bpy.data.objects[altname],
+                                                      nvb_utils.isRootDummy).name == self.name:
+                                # parent named node exists with suffix
+                                # shares mdl root dummy name, so use it.
+                                obj.parent = bpy.data.objects[altname]
+                                obj.matrix_parent_inverse = obj.parent.matrix_world.inverted()
+                                found = True
+                                break
                         # Node with invalid parent.
-                        raise nvb_def.MalformedMdlFile(node.name + ' has no parent ' + node.parentName)
+                        if not found:
+                            raise nvb_def.MalformedMdlFile(node.name + ' has no parent ' + node.parentName)
 
         # Import the walkmesh, it will use any placeholder dummies just imported,
         # and the walkmesh nodes will be copied during animation import
