@@ -365,6 +365,16 @@ class Trimesh(GeometryNode):
         self.shadow           = 1
         self.beaming          = 0
         self.inheritcolor     = 0  # Unused ?
+        self.m_bIsBackgroundGeometry = 0
+        self.dirt_enabled     = 0
+        self.dirt_texture     = 1
+        self.dirt_worldspace  = 1
+        self.hologram_donotdraw = 0
+        self.animateuv        = 0
+        self.uvdirectionx     = 1.0
+        self.uvdirectiony     = 1.0
+        self.uvjitter         = 0.0
+        self.uvjitterspeed    = 0.0
         self.alpha            = 1.0
         self.transparencyhint = 0
         self.selfillumcolor   = (0.0, 0.0, 0.0)
@@ -435,6 +445,36 @@ class Trimesh(GeometryNode):
                     self.parsed_lines.append(idx)
                 elif (label == 'rotatetexture'):
                     self.rotatetexture = l_int(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'm_bIsBackgroundGeometry'):
+                    self.m_bIsBackgroundGeometry = l_int(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'dirt_enabled'):
+                    self.dirt_enabled = l_int(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'dirt_texture'):
+                    self.dirt_texture = l_int(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'dirt_worldspace'):
+                    self.dirt_worldspace = l_int(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'hologram_donotdraw'):
+                    self.hologram_donotdraw = l_int(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'animateuv'):
+                    self.animateuv = l_int(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'uvdirectionx'):
+                    self.uvdirectionx = l_float(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'uvdirectiony'):
+                    self.uvdirectiony = l_float(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'uvjitter'):
+                    self.uvjitter = l_float(line[1])
+                    self.parsed_lines.append(idx)
+                elif (label == 'uvjitterspeed'):
+                    self.uvjitterspeed = l_float(line[1])
                     self.parsed_lines.append(idx)
                 elif (label == 'alpha'):
                     self.alpha = l_float(line[1])
@@ -791,6 +831,16 @@ class Trimesh(GeometryNode):
         obj.nvb.beaming          = (self.beaming == 1)
         obj.nvb.inheritcolor     = (self.inheritcolor == 1)
         obj.nvb.rotatetexture    = (self.rotatetexture == 1)
+        obj.nvb.m_bIsBackgroundGeometry = (self.m_bIsBackgroundGeometry == 1)
+        obj.nvb.dirt_enabled     = (self.dirt_enabled == 1)
+        obj.nvb.dirt_texture     = self.dirt_texture
+        obj.nvb.dirt_worldspace  = self.dirt_worldspace
+        obj.nvb.hologram_donotdraw = (self.hologram_donotdraw == 1)
+        obj.nvb.animateuv        = (self.animateuv == 1)
+        obj.nvb.uvdirectionx     = self.uvdirectionx
+        obj.nvb.uvdirectiony     = self.uvdirectiony
+        obj.nvb.uvjitter         = self.uvjitter
+        obj.nvb.uvjitterspeed    = self.uvjitterspeed
         obj.nvb.transparencyhint = self.transparencyhint
         obj.nvb.selfillumcolor   = self.selfillumcolor
         obj.nvb.ambientcolor     = self.ambient
@@ -1046,6 +1096,16 @@ class Trimesh(GeometryNode):
             asciiLines.append('  lightmapped ' + str(int(obj.nvb.lightmapped)))
             asciiLines.append('  beaming ' + str(int(obj.nvb.beaming)))
             asciiLines.append('  inheritcolor ' + str(int(obj.nvb.inheritcolor)))
+            asciiLines.append('  m_bIsBackgroundGeometry ' + str(int(obj.nvb.m_bIsBackgroundGeometry)))
+            asciiLines.append('  dirt_enabled ' + str(int(obj.nvb.dirt_enabled)))
+            asciiLines.append('  dirt_texture ' + str(obj.nvb.dirt_texture))
+            asciiLines.append('  dirt_worldspace ' + str(obj.nvb.dirt_worldspace))
+            asciiLines.append('  hologram_donotdraw ' + str(int(obj.nvb.hologram_donotdraw)))
+            asciiLines.append('  animateuv ' + str(int(obj.nvb.animateuv)))
+            asciiLines.append('  uvdirectionx ' + str(obj.nvb.uvdirectionx))
+            asciiLines.append('  uvdirectiony ' + str(obj.nvb.uvdirectiony))
+            asciiLines.append('  uvjitter ' + str(obj.nvb.uvjitter))
+            asciiLines.append('  uvjitterspeed ' + str(obj.nvb.uvjitterspeed))
             asciiLines.append('  transparencyhint ' + str(obj.nvb.transparencyhint))
             # These two are for tiles only
             if classification == 'TILE':

@@ -314,6 +314,16 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
     beaming          = bpy.props.BoolProperty(name = 'beaming', description = 'Object casts beams (?)', default = False)
     inheritcolor     = bpy.props.BoolProperty(name = 'Inheritcolor', description = 'Unused (?)', default = False)
     rotatetexture    = bpy.props.BoolProperty(name = 'Rotatetexture', description = 'Automatically rotates texture to prevent seams', default = False)
+    m_bIsBackgroundGeometry = bpy.props.BoolProperty(name='Background Geometry', description="Lower detail or fewer mipmaps (?)", default=False, options=set())
+    dirt_enabled     = bpy.props.BoolProperty(name="Dirt", description="Dirt enabled (KotOR 2:TSL ONLY)", default=False, options=set())
+    dirt_texture     = bpy.props.IntProperty(name="Dirt Texture", description="Dirt texture, values from walkmesh materials?", default=1, options=set())
+    dirt_worldspace  = bpy.props.IntProperty(name="Dirt Worldspace", description="Dirt world space, some kind of mapping?", default=1, options=set())
+    hologram_donotdraw = bpy.props.BoolProperty(name="Hologram Hide", description="Prevent node from being drawn in hologram mode, useful for tongues and other internal parts (KotOR 2:TSL ONLY)", default=False, options=set())
+    animateuv        = bpy.props.BoolProperty(name="Animate UVs", description="Enable UV animation for texture-only/surface animation", default=False, options=set())
+    uvdirectionx     = bpy.props.FloatProperty(name="X Direction", description="UV animation vector X component", default=1.0, options=set())
+    uvdirectiony     = bpy.props.FloatProperty(name="Y Direction", description="UV animation vector Y component", default=1.0, options=set())
+    uvjitter         = bpy.props.FloatProperty(name="Jitter Amount", description="UV animation jitter quantity", default=0.0, options=set())
+    uvjitterspeed    = bpy.props.FloatProperty(name="Jitter Speed", description="UV animation jitter speed", default=0.0, options=set())
     transparencyhint = bpy.props.IntProperty(name = 'Transparency Hint', default = 0, min = 0, max = 32)
     selfillumcolor   = bpy.props.FloatVectorProperty(name = 'Selfilluminationcolor',
                                                      description = 'Makes the object seem to glow but does not emit light',
