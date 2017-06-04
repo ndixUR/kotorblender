@@ -908,8 +908,6 @@ class NVB_PANEL_MESH(bpy.types.Panel):
             row = box.row()
             row.prop(obj.nvb, 'ambientcolor', text='Ambient')
 
-            row = box.row()
-            row.prop(obj.nvb, 'shininess', text='Shininess')
             split = box.split()
             col = split.column()
             col.prop(obj.nvb, 'render', text='Render')

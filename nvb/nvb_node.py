@@ -380,8 +380,6 @@ class Trimesh(GeometryNode):
         self.selfillumcolor   = (0.0, 0.0, 0.0)
         self.ambient          = (0.0, 0.0, 0.0)
         self.diffuse          = (0.0, 0.0, 0.0)
-        self.specular         = (0.0, 0.0, 0.0)
-        self.shininess        = 0
         self.bitmap           = nvb_def.null
         self.bitmap2          = nvb_def.null
         self.tangentspace     = 0
@@ -497,14 +495,6 @@ class Trimesh(GeometryNode):
                                     l_float(line[2]),
                                     l_float(line[3]))
                     self.parsed_lines.append(idx)
-                elif (label == 'specular'):
-                    self.specular = (l_float(line[1]),
-                                     l_float(line[2]),
-                                     l_float(line[3]))
-                    self.parsed_lines.append(idx)
-                elif (label == 'shininess'):
-                    self.shininess = l_int(l_float(line[1]))
-                    self.parsed_lines.append(idx)
                 elif (label == 'center'):
                     # Unused ? Becuase we don't do anything with this
                     try:
@@ -569,7 +559,7 @@ class Trimesh(GeometryNode):
         if nvb_glob.materialMode == 'SIN':
             # Avoid duplicate materials, search for similar ones.
             material = nvb_utils.materialExists(self.diffuse,
-                                                self.specular,
+                                                (0.0, 0.0, 0.0),
                                                 texName,
                                                 self.alpha)
 
@@ -577,7 +567,6 @@ class Trimesh(GeometryNode):
             material = bpy.data.materials.new(name)
             material.diffuse_color     = self.diffuse
             material.diffuse_intensity = 1.0
-            material.specular_color    = self.specular
 
             if not nvb_utils.isNull(self.bitmap):
                 textureSlot = material.texture_slots.add()
@@ -844,7 +833,6 @@ class Trimesh(GeometryNode):
         obj.nvb.transparencyhint = self.transparencyhint
         obj.nvb.selfillumcolor   = self.selfillumcolor
         obj.nvb.ambientcolor     = self.ambient
-        obj.nvb.shininess        = self.shininess
         obj.nvb.lytposition      = self.lytposition
 
 
@@ -867,10 +855,6 @@ class Trimesh(GeometryNode):
         if material:
             color = material.diffuse_color
             asciiLines.append('  diffuse ' +    str(round(color[0], 2)) + ' ' +
-                                                str(round(color[1], 2)) + ' ' +
-                                                str(round(color[2], 2))  )
-            color = material.specular_color
-            asciiLines.append('  specular ' +   str(round(color[0], 2)) + ' ' +
                                                 str(round(color[1], 2)) + ' ' +
                                                 str(round(color[2], 2))  )
 
@@ -904,7 +888,6 @@ class Trimesh(GeometryNode):
         else:
             # No material, set some default values
             asciiLines.append('  diffuse 1.0 1.0 1.0')
-            asciiLines.append('  specular 0.0 0.0 0.0')
             asciiLines.append('  alpha 1.0')
             asciiLines.append('  bitmap ' + nvb_def.null)
             asciiLines.append('  tangentspace 0')
@@ -1082,7 +1065,6 @@ class Trimesh(GeometryNode):
                                             str(round(color[1], 2)) + ' ' +
                                             str(round(color[2], 2))  )
         self.addMaterialDataToAscii(obj, asciiLines)
-        asciiLines.append('  shininess ' + str(obj.nvb.shininess))
         if not simple:
 
 
@@ -2004,8 +1986,6 @@ class Aabb(Trimesh):
                                            str(round(color[2], 2))  )
         asciiLines.append('  ambient 1.0 1.0 1.0')
         asciiLines.append('  diffuse 1.0 1.0 1.0')
-        asciiLines.append('  specular 0.0 0.0 0.0')
-        asciiLines.append('  shininess 0')
         asciiLines.append('  bitmap NULL')
         Trimesh.addMeshDataToAscii(self, obj, asciiLines, simple)
         if self.roottype != 'wok':
