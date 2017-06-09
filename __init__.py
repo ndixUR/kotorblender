@@ -20,7 +20,7 @@
 bl_info = {
     "name": "Neverblender",
     "author": "Attila Gyoerkoes",
-    "version": (1, 29),
+    "version": (1, 30),
     "blender": (2, 7, 0),
     "location": "File > Import-Export, Object Properties",
     "description": "Import, export and edit Odyssey MDL format",
