@@ -871,9 +871,9 @@ class Trimesh(GeometryNode):
                         texture.nvb.exported_in_save = True
                 else:
                     imgName = nvb_def.null
+                asciiLines.append('  tangentspace ' + str(int(texture.nvb.bumpmapped)))
             asciiLines.append('  bitmap ' + imgName)
             asciiLines.append('  alpha ' + str(round(nvb_utils.getAuroraAlpha(obj), 2)))
-            asciiLines.append('  tangentspace ' + str(int(texture.nvb.bumpmapped)))
             # Test for lightmap assigned as second texture
             if material.texture_slots[1]:
                 texture  = material.texture_slots[1].texture
