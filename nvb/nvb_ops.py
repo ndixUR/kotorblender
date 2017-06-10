@@ -6,6 +6,8 @@ from . import nvb_utils
 from . import nvb_io
 from . import nvb_txi
 
+from mathutils import Matrix, Vector, Quaternion
+
 class NVBTEXTURE_IO(bpy.types.Operator):
     bl_idname = "nvb.texture_info_io"
     bl_label = "Texture Info"
@@ -43,6 +45,79 @@ class NVBTEXTURE_BOX_OPS(bpy.types.Operator):
         texture = context.object.active_material.active_texture
         current_state = getattr(texture.nvb, attrname)
         setattr(texture.nvb, attrname, not current_state)
+        return {'FINISHED'}
+
+class NVBSKIN_BONE_OPS(bpy.types.Operator):
+    bl_idname = "nvb.armature"
+    bl_label = "Armature Operations"
+    #bl_property = 'action'
+    bl_options = {'UNDO'}
+
+    def boner(self, amt, obj, parent=None, pbone=None):
+        bone = None
+        if obj.nvb.meshtype == nvb_def.Meshtype.TRIMESH and \
+           not obj.nvb.render:
+            bone = amt.edit_bones.new(obj.name + 'Bone')
+            bone.parent = pbone
+            bone.head = pbone.tail
+            bone.tail = obj.matrix_world.to_translation()
+            #+ parent.matrix_world.to_translation()
+            '''
+            if pbone is not None:
+                #bone.parent = amt.edit_bones[parent.name + 'Bone']
+                bone.parent = pbone
+                bone.head = bone.parent.tail
+                bone.use_connect = False
+                (trans, rot, scale) = bone.parent.matrix.decompose()
+                vector = trans
+                if not isinstance(rot, Quaternion):
+                    rot = rot.to_quaternion()
+                bone.tail = rot * obj.rotation_quaternion * bone.head
+            else:
+                #bone.head = obj.location
+                bone.tail = obj.location
+                rot = obj.rotation_euler
+                if not isinstance(rot, Quaternion):
+                    rot = rot.to_quaternion()
+                #rot = Matrix.Translation((0, 0, 0))
+                #vector = (1, 0, 0)
+                bone.head = rot * obj.rotation_quaternion * bone.tail
+            #bone.tail = rot * Vector(vector) + bone.head
+            '''
+        if bone is None:
+            bone = pbone
+        for c in obj.children:
+            #print(obj.nvb.meshtype)
+            #print(obj.nvb.render)
+            self.boner(amt, c, obj, bone)
+
+    def execute(self, context):
+        #bpy.ops.object.add(type='ARMATURE', enter_editmode=True, location=context.scene.objects['cutscenedummy'].location)
+        bpy.ops.object.armature_add()
+        ob = bpy.context.scene.objects.active
+        ob.show_x_ray = True
+        ob.name = 'Armature'
+        ob.show_axis = True
+        ob.location = context.scene.objects['cutscenedummy'].location
+        #context.scene.objects.active = ob
+        print(dir(ob))
+        amt = ob.data
+        print(dir(amt))
+        amt.name = 'ArmatureAmt'
+        #amt.show_axes = True
+        bpy.ops.object.mode_set(mode='EDIT')
+        amt.edit_bones[0].tail = context.scene.objects['rootdummy'].location
+        self.boner(amt, context.scene.objects['rootdummy'], pbone=amt.edit_bones[0])
+        bpy.ops.object.mode_set(mode='OBJECT')
+        #for name, obj in context.scene.objects.items():
+        '''
+        while len(obj.children):
+            print(name)
+            print(dir(obj))
+            if obj.nvb.meshtype == nvb_def.Meshtype.TRIMESH and \
+               not obj.nvb.render:
+                pass
+        '''
         return {'FINISHED'}
 
 class NVBTEXTURE_OPS(bpy.types.Operator):
