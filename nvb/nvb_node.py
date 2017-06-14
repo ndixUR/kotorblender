@@ -444,7 +444,7 @@ class Trimesh(GeometryNode):
                 elif (label == 'rotatetexture'):
                     self.rotatetexture = l_int(line[1])
                     self.parsed_lines.append(idx)
-                elif (label == 'm_bIsBackgroundGeometry'):
+                elif (label == 'm_bisbackgroundgeometry'):
                     self.m_bIsBackgroundGeometry = l_int(line[1])
                     self.parsed_lines.append(idx)
                 elif (label == 'dirt_enabled'):
