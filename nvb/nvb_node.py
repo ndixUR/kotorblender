@@ -606,6 +606,10 @@ class Trimesh(GeometryNode):
         mesh.tessfaces.add(len(self.facelist.faces))
         mesh.tessfaces.foreach_set('vertices_raw', unpack_face_list(self.facelist.faces))
 
+        # Special handling for converted sabermesh
+        if name.startswith('2081__'):
+            mesh.show_double_sided = True
+
         # Special handling for mesh in walkmesh files
         if self.roottype in ['pwk', 'dwk', 'wok']:
             # Create walkmesh materials
@@ -1186,6 +1190,23 @@ class Danglymesh(Trimesh):
         asciiLines.append('  tightness '    + str(round(obj.nvb.tightness, 3)))
         asciiLines.append('  displacement ' + str(round(obj.nvb.displacement, 3)))
         self.addConstraintsToAscii(obj, asciiLines)
+
+
+class Lightsaber(Trimesh):
+    """
+
+    """
+    def __init__(self, name = 'UNNAMED'):
+        Trimesh.__init__(self, name)
+        self.nodetype = 'lightsaber'
+
+        self.meshtype     = nvb_def.Meshtype.LIGHTSABER
+
+    def createMesh(self, name):
+            # Create the mesh itself
+            mesh = Trimesh.createMesh(self, name)
+            mesh.show_double_sided = True
+            return mesh
 
 
 class Skinmesh(Trimesh):

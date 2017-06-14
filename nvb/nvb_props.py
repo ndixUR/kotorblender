@@ -294,11 +294,12 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
 
     # For mesh objects
     meshtype   = bpy.props.EnumProperty(name = 'Type',
-                                        items = [   (nvb_def.Meshtype.TRIMESH, 'Trimesh', '0 desc', 0), \
-                                                    (nvb_def.Meshtype.DANGLYMESH, 'Danglymesh', '1 desc', 1), \
-                                                    (nvb_def.Meshtype.SKIN, 'Skinmesh', '2 desc', 2), \
-                                                    (nvb_def.Meshtype.AABB, 'AABB Walkmesh', '3 desc', 3), \
-                                                    (nvb_def.Meshtype.EMITTER, 'Emitter', '4 desc', 4)],
+                                        items = [ (nvb_def.Meshtype.TRIMESH, 'Trimesh', 'Triangle mesh', 0), \
+                                                  (nvb_def.Meshtype.DANGLYMESH, 'Danglymesh', 'Triangle mesh with dangly parts', 1), \
+                                                  (nvb_def.Meshtype.SKIN, 'Skinmesh', 'Triangle mesh with weighted deformation', 2), \
+                                                  (nvb_def.Meshtype.AABB, 'AABB Walkmesh', 'Axis Aligned Bounding Box Walkmesh, for collision detection', 3), \
+                                                  (nvb_def.Meshtype.EMITTER, 'Emitter', 'Particle emitter', 4), \
+                                                  (nvb_def.Meshtype.LIGHTSABER, 'Lightsaber', 'Saber mesh (blade plane)', 5)],
                                         default = nvb_def.Meshtype.TRIMESH)
     smoothgroup    = bpy.props.EnumProperty(name = 'Smoothgroup',
                                             items = [   ('SEPR', 'Separate', 'All faces have their own smoothgroup',   0),

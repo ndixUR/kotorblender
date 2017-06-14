@@ -41,6 +41,7 @@ class Mdl():
                   'reference':  nvb_node.Reference,
                   'trimesh':    nvb_node.Trimesh,
                   'danglymesh': nvb_node.Danglymesh,
+                  'lightsaber': nvb_node.Lightsaber,
                   'skin':       nvb_node.Skinmesh,
                   'emitter':    nvb_node.Emitter,
                   'light':      nvb_node.Light,

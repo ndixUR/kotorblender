@@ -99,11 +99,12 @@ class DummySubtype():
 class Meshtype():
     TRIMESH    = 'TRI'
     DANGLYMESH = 'DAN'
+    LIGHTSABER = 'SAB'
     SKIN       = 'SKI'
     AABB       = 'AAB'
     EMITTER    = 'EMT'
 
-    ALL = {TRIMESH, DANGLYMESH, SKIN, AABB, EMITTER}
+    ALL = {TRIMESH, DANGLYMESH, LIGHTSABER, SKIN, AABB, EMITTER}
 
 
 class Dummytype():
