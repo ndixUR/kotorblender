@@ -301,11 +301,11 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
                                                     (nvb_def.Meshtype.EMITTER, 'Emitter', '4 desc', 4)],
                                         default = nvb_def.Meshtype.TRIMESH)
     smoothgroup    = bpy.props.EnumProperty(name = 'Smoothgroup',
-                                            items = [   ('SEPR', 'Seperate', 'All faces have their own smoothgroup',   0),
+                                            items = [   ('SEPR', 'Separate', 'All faces have their own smoothgroup',   0),
                                                         ('NONE', 'Single', 'All Faces belong to the same smoothgroup', 1),
                                                         ('AUTO', 'Auto',   'Generate smoothgroups either from edges marked as sharp or edge angles when no sharp edges are present',  2)
                                                          ],
-                                            default = 'SEPR')
+                                            default = 'AUTO')
 
     shadow           = bpy.props.BoolProperty(name = 'Shadow', description = 'Whether to cast shadows', default = True, update=nvb_update_shadow_prop)
     tilefade         = bpy.props.BoolProperty(name = 'Tilefade', description = 'Object will fade when the player is nearby. (Tilesets only)', default = False)
