@@ -919,7 +919,8 @@ class Trimesh(GeometryNode):
                                          [0,scale[1],0,0],
                                          [0,0,scale[2],0],
                                          [0,0,0       ,1]])
-        mesh.transform(scale_matrix)
+        # So... I could figure this out, but I need to know what breaks without this
+        #mesh.transform(scale_matrix)
 
         # Triangulation (doing it with bmesh to retain edges marked as sharp)
         bm = bmesh.new()
