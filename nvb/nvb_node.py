@@ -359,7 +359,6 @@ class Trimesh(GeometryNode):
 
         self.meshtype         = nvb_def.Meshtype.TRIMESH
         self.center           = (0.0, 0.0, 0.0) # Unused ?
-        self.tilefade         = 0
         self.lightmapped      = 0
         self.render           = 1
         self.shadow           = 1
@@ -420,9 +419,6 @@ class Trimesh(GeometryNode):
                 continue
 
             if not l_isNumber(label):
-                if (label == 'tilefade'):
-                    self.tilefade = l_int(line[1])
-                    self.parsed_lines.append(idx)
                 elif (label == 'render'):
                     self.render = l_int(line[1])
                     self.parsed_lines.append(idx)
@@ -817,7 +813,6 @@ class Trimesh(GeometryNode):
         GeometryNode.setObjectData(self, obj)
 
         obj.nvb.meshtype         = self.meshtype
-        obj.nvb.tilefade         = self.tilefade
         obj.nvb.lightmapped      = (self.lightmapped == 1)
         obj.nvb.render           = (self.render == 1)
         obj.nvb.shadow           = (self.shadow == 1)
@@ -841,11 +836,10 @@ class Trimesh(GeometryNode):
 
 
     def addToScene(self, scene):
-        if nvb_glob.minimapMode:
-            if (self.tilefade and nvb_glob.minimapSkipFade) or not self.render:
-                # Fading objects won't be imported in minimap mode
-                # We may need it for the tree stucture, so import it as an empty
-                return Dummy.addToScene(self, scene)
+        if nvb_glob.minimapMode and not self.render:
+            # Fading objects won't be imported in minimap mode
+            # We may need it for the tree stucture, so import it as an empty
+            return Dummy.addToScene(self, scene)
         mesh = self.createMesh(self.name)
         obj  = bpy.data.objects.new(self.name, mesh)
         self.setObjectData(obj)
@@ -1097,7 +1091,6 @@ class Trimesh(GeometryNode):
             # These two are for tiles only
             if classification == 'TILE':
                 asciiLines.append('  rotatetexture ' + str(int(obj.nvb.rotatetexture)))
-                asciiLines.append('  tilefade ' + str(int(obj.nvb.tilefade)))
 
         self.addMeshDataToAscii(obj, asciiLines, simple)
 
