@@ -419,7 +419,7 @@ class Trimesh(GeometryNode):
                 continue
 
             if not l_isNumber(label):
-                elif (label == 'render'):
+                if (label == 'render'):
                     self.render = l_int(line[1])
                     self.parsed_lines.append(idx)
                 elif (label == 'shadow'):
