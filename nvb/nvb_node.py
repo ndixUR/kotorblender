@@ -323,7 +323,7 @@ class Reference(GeometryNode):
         GeometryNode.loadAscii(self, asciiNode)
         l_isNumber = nvb_utils.isNumber
 
-        for line in asciiNode:
+        for idx, line in enumerate(asciiNode):
             try:
                 label = line[0].lower()
             except IndexError:
@@ -333,8 +333,12 @@ class Reference(GeometryNode):
                 if (label == 'refmodel'):
                     # self.refmodel = line[1].lower()
                     self.refmodel = line[1]
+                    self.parsed_lines.append(idx)
                 elif (label == 'reattachable'):
                     self.reattachable = int(line[1])
+                    self.parsed_lines.append(idx)
+        if (self.nodetype == 'reference'):
+            self.addUnparsedToRaw(asciiNode)
 
 
     def setObjectData(self, obj):
