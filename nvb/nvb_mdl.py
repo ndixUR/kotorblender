@@ -22,6 +22,7 @@ class Mdl():
         self.supermodel     = nvb_def.null
         self.animscale      = 1.0
         self.classification = nvb_def.Classification.UNKNOWN
+        self.ignorefog      = False
 
         self.validExports   = [] # needed for skinmeshes and animations
 
@@ -106,6 +107,7 @@ class Mdl():
                 obj.nvb.dummytype      = nvb_def.Dummytype.MDLROOT
                 obj.nvb.supermodel     = self.supermodel
                 obj.nvb.classification = self.classification
+                obj.nvb.ignorefog      = (self.ignorefog >= 1)
                 rootDummy = obj
 
                 obj.nvb.imporder = objIdx
@@ -208,6 +210,11 @@ class Mdl():
                     if self.classification not in nvb_def.Classification.ALL:
                         print("Neverblender - WARNING: Invalid classification '" + self.classification + "'")
                         self.classification = nvb_def.Classification.UNKNOWN
+                elif (label == 'ignorefog'):
+                    try:
+                        self.ignorefog = int(line[1])
+                    except IndexError:
+                        print("Neverblender - WARNING: Unable to read ignorefog. Default value " + self.ignorefog)
                 elif (label == 'setanimationscale'):
                     try:
                         self.animscale = line[1]
@@ -292,6 +299,7 @@ class Mdl():
         self.name           = rootDummy.name
         self.classification = rootDummy.nvb.classification
         self.supermodel     = rootDummy.nvb.supermodel
+        self.ignorefog      = rootDummy.nvb.ignorefog
         self.animscale      = rootDummy.nvb.animscale
 
         # The Names of exported geometry nodes. We'll need this for skinmeshes
@@ -308,6 +316,7 @@ class Mdl():
         asciiLines.append('newmodel ' + self.name)
         asciiLines.append('setsupermodel ' + self.name + ' ' + self.supermodel)
         asciiLines.append('classification ' + self.classification)
+        asciiLines.append('ignorefog ' + str(int(self.ignorefog)))
         asciiLines.append('setanimationscale ' + str(round(self.animscale, 2)))
         #res = nvb_utils.searchNode(rootDummy, lambda o: o.active_material.active_texture.nvb.bumpmapped)
         #if res is not None:

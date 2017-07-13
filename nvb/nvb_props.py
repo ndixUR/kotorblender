@@ -260,6 +260,7 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
                                                       (nvb_def.Classification.SABER,     'Lightsaber','Lightsaber weapon',                   16), \
                                                       (nvb_def.Classification.ITEM,      'Placeable', 'Items or placeables',                 32) ],
                                             default = nvb_def.Classification.UNKNOWN)
+    ignorefog      = bpy.props.BoolProperty(name = 'Ignore Fog', description = 'If true, model will not be occluded by area fog in-game', default = False)
     dummysubtype   = bpy.props.EnumProperty(name = 'Subtype',
                                             items = [('NONE', 'None',            'Simple dummy object',                     0), \
                                                      ('HAND', 'Hand',            'Hand node for spells and effects. \n (for door and placeable models)',        1), \

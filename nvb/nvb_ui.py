@@ -79,10 +79,12 @@ class NVB_PANEL_EMPTY(bpy.types.Panel):
                 col = split.column()
                 col.label(text = 'Classification:')
                 col.label(text = 'Supermodel:')
+                col.label(text = 'Ignore Fog:')
                 col.label(text = 'Animation Scale:')
                 col = split.column()
                 col.prop(obj.nvb, 'classification', text = '')
                 col.prop(obj.nvb, 'supermodel', text = '')
+                col.prop(obj.nvb, 'ignorefog', text = '')
                 col.prop(obj.nvb, 'animscale', text = '')
 
                 sep = layout.separator()
