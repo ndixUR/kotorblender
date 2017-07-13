@@ -1515,16 +1515,19 @@ class Emitter(GeometryNode):
                     # this block covers all object data and controllers
                     attrname = [name for name in dir(self) if name.lower() == label][0]
                     default_value = getattr(self, attrname)
-                    if isinstance(default_value, str):
-                        setattr(self, attrname, line[1])
-                    elif isinstance(default_value, bool):
-                        setattr(self, attrname, bool(int(line[1])))
-                    elif isinstance(default_value, int):
-                        setattr(self, attrname, int(line[1]))
-                    elif isinstance(default_value, float):
-                        setattr(self, attrname, float(line[1]))
-                    elif isinstance(default_value, tuple):
-                        setattr(self, attrname, tuple(map(float, line[1:])))
+                    try:
+                        if isinstance(default_value, str):
+                            setattr(self, attrname, line[1])
+                        elif isinstance(default_value, bool):
+                            setattr(self, attrname, bool(int(line[1])))
+                        elif isinstance(default_value, int):
+                            setattr(self, attrname, int(line[1]))
+                        elif isinstance(default_value, float):
+                            setattr(self, attrname, float(line[1]))
+                        elif isinstance(default_value, tuple):
+                            setattr(self, attrname, tuple(map(float, line[1:])))
+                    except:
+                        continue
                 else:
                     self.rawascii += '\n  ' + ' '.join(line)
 
