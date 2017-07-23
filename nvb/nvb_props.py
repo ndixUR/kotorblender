@@ -260,6 +260,7 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
                                                       (nvb_def.Classification.SABER,     'Lightsaber','Lightsaber weapon',                   16), \
                                                       (nvb_def.Classification.ITEM,      'Placeable', 'Items or placeables',                 32) ],
                                             default = nvb_def.Classification.UNKNOWN)
+    unknownC1      = bpy.props.IntProperty(name = 'Unknown', description = 'Unknown byte-2 in the classification bytes section of the model header', default = 0)
     ignorefog      = bpy.props.BoolProperty(name = 'Ignore Fog', description = 'If true, model will not be occluded by area fog in-game', default = False)
     dummysubtype   = bpy.props.EnumProperty(name = 'Subtype',
                                             items = [('NONE', 'None',            'Simple dummy object',                     0), \
