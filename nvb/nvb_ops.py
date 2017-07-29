@@ -316,7 +316,7 @@ class NVB_OP_Import(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     filename_ext = '.mdl'
     filter_glob = bpy.props.StringProperty(
-            default = '*.mdl',
+            default = '*.mdl;*.mdl.ascii',
             options = {'HIDDEN'},
             )
 
@@ -384,7 +384,7 @@ class NVB_OP_Export(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     filename_ext = '.mdl'
     filter_glob = bpy.props.StringProperty(
-            default = '*.mdl',
+            default = '*.mdl;*.mdl.ascii',
             options = {'HIDDEN'},
             )
 
