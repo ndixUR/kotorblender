@@ -1051,6 +1051,26 @@ class Trimesh(GeometryNode):
                 for f in faceList:
                     asciiLines.append(formatString.format(f[8], f[9], f[10]))
 
+            if len(mesh.vertex_colors.keys()) and \
+               ('RoomLinks' not in mesh.vertex_colors or len(mesh.vertex_colors.keys()) > 1):
+                # get dict key for first vertex color layer that is not RoomLinks
+                colorKey = [k for k in mesh.vertex_colors.keys() if k != 'RoomLinks'][0]
+                # insert the vertex colors
+                asciiLines.append('  colors ' + str(len(mesh.vertices)))
+                formatString = '    {: .7g} {: .7g} {: .7g}'
+                for face in mesh.polygons:
+                    for loop_idx in face.loop_indices:
+                        print('loop ' + str(loop_idx) + '\n')
+                        s = formatString.format(mesh.vertex_colors[colorKey].data[loop_idx].color[0],
+                                                mesh.vertex_colors[colorKey].data[loop_idx].color[1],
+                                                mesh.vertex_colors[colorKey].data[loop_idx].color[2])
+                        asciiLines.append(s)
+                # insert vertex color indices
+                asciiLines.append('  colorindices ' + str(len(faceList)))
+                for f in faceList:
+                    s = formatString.format(f[0], f[1], f[2])
+                    asciiLines.append(s)
+
         if self.roottype == 'wok' or self.nodetype == 'aabb':
             if len(self.roomlinks):
                 asciiLines.append('  roomlinks ' + str(len(self.roomlinks)))
