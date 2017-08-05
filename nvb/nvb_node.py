@@ -665,7 +665,7 @@ class Trimesh(GeometryNode):
                         textureSlot.texture.image = image
 
             # Create UV map
-            if (len(self.tverts) > 0) and (mesh.tessfaces) and (not nvb_utils.isNull(self.bitmap)):
+            if (len(self.tverts) > 0) and (mesh.tessfaces):
                 uv = mesh.tessface_uv_textures.new(name + '.uv')
                 mesh.tessface_uv_textures.active = uv
 
@@ -693,11 +693,11 @@ class Trimesh(GeometryNode):
                     tessfaceUV.uv3 = self.tverts[uvIdx[2]]
 
                     # Apply texture to uv face
-                    if material.texture_slots[0]:
+                    if (not nvb_utils.isNull(self.bitmap)) and material.texture_slots[0]:
                         tessfaceUV.image = material.texture_slots[0].texture.image
 
             # Create lightmap UV map
-            if (len(self.tverts1) > 0) and (mesh.tessfaces) and (not nvb_utils.isNull(self.bitmap2)):
+            if (len(self.tverts1) > 0) and (mesh.tessfaces):
                 uv = mesh.tessface_uv_textures.new(name + '_lm.uv')
                 #mesh.tessface_uv_textures.active = uv
 
@@ -725,7 +725,7 @@ class Trimesh(GeometryNode):
                     tessfaceUV.uv3 = self.tverts1[uvIdx[2]]
 
                     # Apply texture to uv face
-                    if material.texture_slots[1]:
+                    if (not nvb_utils.isNull(self.bitmap2)) and material.texture_slots[1]:
                         tessfaceUV.image = material.texture_slots[1].texture.image
                 material.texture_slots[1].uv_layer = name + '_lm.uv'
                 material.texture_slots[0].uv_layer = name + '.uv'
@@ -1007,7 +1007,7 @@ class Trimesh(GeometryNode):
         if material:
             texture = material.active_texture
 
-        if simple or not texture:
+        if simple or len(uvList) < 1:
             asciiLines.append('  faces ' + str(len(faceList)))
 
             vertDigits        = str(len(str(len(mesh.vertices))))
