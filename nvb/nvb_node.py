@@ -183,7 +183,8 @@ class GeometryNode():
         s = '  position {: .7g} {: .7g} {: .7g}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
         asciiLines.append(s)
 
-        rot = nvb_utils.euler2nwangle(transmat.to_euler('XYZ'))
+        #rot = nvb_utils.euler2nwangle(transmat.to_euler('XYZ'))
+        rot = nvb_utils.getAuroraRotFromObject(obj)
         s = '  orientation {: .7g} {: .7g} {: .7g} {: .7g}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
         asciiLines.append(s)
         '''
