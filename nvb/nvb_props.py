@@ -252,13 +252,14 @@ class NVB_PG_OBJECT(bpy.types.PropertyGroup):
     # For MDL Rootdummy
     supermodel     = bpy.props.StringProperty(name = 'Supermodel', description = 'Name of the model to inherit animations from', default = nvb_def.null)
     classification = bpy.props.EnumProperty(name  = 'Classification',
-                                            items = [ (nvb_def.Classification.UNKNOWN,   'Unknown',   'Unknown classification',              0), \
+                                            items = [ (nvb_def.Classification.UNKNOWN,   'Other',     'Unknown classification',              0), \
                                                       (nvb_def.Classification.EFFECT,    'Effect',    'Effects',                             1), \
                                                       (nvb_def.Classification.TILE,      'Tile',      'Tiles for a tileset',                 2), \
                                                       (nvb_def.Classification.CHARACTER, 'Character', 'Creatures, characters or placeables', 4), \
                                                       (nvb_def.Classification.DOOR,      'Door',      'Doors',                               8), \
                                                       (nvb_def.Classification.SABER,     'Lightsaber','Lightsaber weapon',                   16), \
-                                                      (nvb_def.Classification.ITEM,      'Placeable', 'Items or placeables',                 32) ],
+                                                      (nvb_def.Classification.ITEM,      'Placeable', 'Items or placeables',                 32), \
+                                                      (nvb_def.Classification.FLYER,     'Flyer',     'Non-interactive scene elements',      64) ],
                                             default = nvb_def.Classification.UNKNOWN)
     unknownC1      = bpy.props.IntProperty(name = 'Unknown', description = 'Unknown byte-2 in the classification bytes section of the model header', default = 0)
     ignorefog      = bpy.props.BoolProperty(name = 'Ignore Fog', description = 'If true, model will not be occluded by area fog in-game', default = False)
