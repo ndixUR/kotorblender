@@ -142,6 +142,8 @@ class GeometryNode():
     def addToScene(self, scene):
         if self.name in bpy.data.objects and \
            nvb_utils.ancestorNode(bpy.data.objects[self.name],
+                                  nvb_utils.isRootDummy) and \
+           nvb_utils.ancestorNode(bpy.data.objects[self.name],
                                   nvb_utils.isRootDummy).name == self.rootname:
             # name and root dummy name match, use existing object
             obj = bpy.data.objects[self.name]
