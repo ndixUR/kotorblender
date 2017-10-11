@@ -61,7 +61,7 @@ class NVB_PG_FLARE(bpy.types.PropertyGroup):
                                                 soft_min = 0.0, soft_max = 1.0)
 
 
-class NVB_PG_TEXTURE(bpy.types.PropertyGroup):
+class KB_PG_TEXTURE(bpy.types.PropertyGroup):
     '''
     This class defines all additional properties needed by the txi file
     format. It hold the properties for image textures.
@@ -95,17 +95,17 @@ class NVB_PG_TEXTURE(bpy.types.PropertyGroup):
         #print(dir(context))
         self.modified_properties.clear()
         for tok in nvb_txi.tokens:
-            attr_def = getattr(NVB_PG_TEXTURE, tok)[1]
+            attr_def = getattr(KB_PG_TEXTURE, tok)[1]
             default_value = attr_def['default']
             if tok == 'specularcolor':
                 default_value = Color(default_value)
             if 'default' in attr_def and getattr(self, tok) != default_value:
                 self.modified_properties.add().name = tok
-            #print(getattr(NVB_PG_TEXTURE, tok))
-            #print(dir(getattr(NVB_PG_TEXTURE, tok)))
-            #print(getattr(NVB_PG_TEXTURE, tok)[1])
-            #print(getattr(NVB_PG_TEXTURE, tok)[1]['default'])
-            #print(getattr(NVB_PG_TEXTURE, tok).default)
+            #print(getattr(KB_PG_TEXTURE, tok))
+            #print(dir(getattr(KB_PG_TEXTURE, tok)))
+            #print(getattr(KB_PG_TEXTURE, tok)[1])
+            #print(getattr(KB_PG_TEXTURE, tok)[1]['default'])
+            #print(getattr(KB_PG_TEXTURE, tok).default)
 
     # TXI props
     blending = bpy.props.EnumProperty(items=[
@@ -225,7 +225,7 @@ def nvb_update_emitter_prop(self, context):
     elif obj.nvb.p2p_type == 'Gravity':
         obj.nvb.p2p_sel = 0
 
-class NVB_PG_OBJECT(bpy.types.PropertyGroup):
+class KB_PG_OBJECT(bpy.types.PropertyGroup):
     '''
     This class defines all additional properties needed by the mdl file
     format. It hold the properties for meshes, lamps and empties.
