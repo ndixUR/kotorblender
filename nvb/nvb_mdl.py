@@ -82,14 +82,14 @@ class Mdl():
         if newNode:
             key = newNode.parentName + newNode.name
             if key in self.nodeDict:
-                print('Neverblender - WARNING: Node name conflict ' + key + '.')
+                print('Kotorblender - WARNING: Node name conflict ' + key + '.')
             else:
                 self.nodeDict[key] = newNode
 
     def addAnimation(self, anim):
         if anim:
             if anim.name in self.animDict:
-                print('Neverblender - WARNING: Animation name conflict.')
+                print('Kotorblender - WARNING: Animation name conflict.')
             else:
                 self.animDict[anim.name] = anim
 
@@ -201,32 +201,32 @@ class Mdl():
                         # line should be ['setsupermodel', modelname, supermodelname]
                         self.supermodel = line[2]
                     except IndexError:
-                        print("Neverblender - WARNING: Unable to read supermodel. Default value " + self.supermodel)
+                        print("Kotorblender - WARNING: Unable to read supermodel. Default value " + self.supermodel)
 
                 elif (label == 'classification'):
                     try:
                         self.classification = line[1].title()
                     except IndexError:
-                        print("Neverblender - WARNING: Unable to read classification. Default value " + self.classification)
+                        print("Kotorblender - WARNING: Unable to read classification. Default value " + self.classification)
 
                     if self.classification not in nvb_def.Classification.ALL:
-                        print("Neverblender - WARNING: Invalid classification '" + self.classification + "'")
+                        print("Kotorblender - WARNING: Invalid classification '" + self.classification + "'")
                         self.classification = nvb_def.Classification.UNKNOWN
                 elif (label == 'classification_unk1'):
                     try:
                         self.unknownC1 = int(line[1])
                     except IndexError:
-                        print("Neverblender - WARNING: Unable to read classification unknown. Default value " + self.unknownC1)
+                        print("Kotorblender - WARNING: Unable to read classification unknown. Default value " + self.unknownC1)
                 elif (label == 'ignorefog'):
                     try:
                         self.ignorefog = int(line[1])
                     except IndexError:
-                        print("Neverblender - WARNING: Unable to read ignorefog. Default value " + self.ignorefog)
+                        print("Kotorblender - WARNING: Unable to read ignorefog. Default value " + self.ignorefog)
                 elif (label == 'setanimationscale'):
                     try:
                         self.animscale = line[1]
                     except IndexError:
-                        print("Neverblender - WARNING: Unable to read animationscale. Default value " + self.animscale)
+                        print("Kotorblender - WARNING: Unable to read animationscale. Default value " + self.animscale)
 
             elif (cs == State.GEOMETRY):
                 if (label == 'node'):

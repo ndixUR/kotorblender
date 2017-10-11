@@ -388,20 +388,20 @@ def copyAnimSceneCheck(theOriginal, newSuffix, oldSuffix = ''):
         else:
             newName = oldName.partition('.')[0]
             if not newName:
-                print('Neverblender: Unable to generate new name')
+                print('Kotorblender: Unable to generate new name')
                 return False
         newName = newName + '.' + newSuffix
     else:
         newName = oldName + '.' + newSuffix
 
     if newName in bpy.data.objects:
-        print('Neverblender: Duplicate object')
+        print('Kotorblender: Duplicate object')
         return False
 
     objType = theOriginal.type
     if (objType == 'LAMP'):
         if newName in bpy.data.lamps:
-            print('Neverblender: Duplicate lamp')
+            print('Kotorblender: Duplicate lamp')
             return False
     elif (objType == 'MESH'):
         if theOriginal.animation_data:
@@ -410,11 +410,11 @@ def copyAnimSceneCheck(theOriginal, newSuffix, oldSuffix = ''):
                 dataPath = fcurve.data_path
                 if dataPath.endswith('alpha_factor'):
                     if newName in bpy.data.materials:
-                        print('Neverblender: Duplicate Material')
+                        print('Kotorblender: Duplicate Material')
                         return False
 
         if newName in bpy.data.actions:
-            print('Neverblender: Duplicate Action')
+            print('Kotorblender: Duplicate Action')
             return False
 
     valid = True

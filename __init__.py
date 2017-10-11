@@ -16,15 +16,14 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-
 bl_info = {
-    "name": "Neverblender",
-    "author": "Attila Gyoerkoes",
+    "name": "KotORBlender",
+    "author": "Attila Gyoerkoes & J.W. Brandon",
     "version": (1, 30),
-    "blender": (2, 7, 0),
+    "blender": (2, 71, 0),
     "location": "File > Import-Export, Object Properties",
-    "description": "Import, export and edit Odyssey MDL format",
-    "warning": "",
+    "description": "Import, export and edit Odyssey (KotOR) ASCII MDL format",
+    'warning': "cannot be used with Neverblender enabled",
     "wiki_url": ""
                 "",
     "tracker_url": "",
@@ -33,31 +32,32 @@ bl_info = {
 
 if 'bpy' in locals():
     import importlib
-    importlib.reload(nvb_def)
-    importlib.reload(nvb_utils)
-    importlib.reload(nvb_io)
-    importlib.reload(nvb_mdl)
-    importlib.reload(nvb_node)
-    importlib.reload(nvb_anim)
-    importlib.reload(nvb_animnode)
+    importlib.reload(nvb.nvb_def)
+    importlib.reload(nvb.nvb_utils)
+    importlib.reload(nvb.nvb_io)
+    importlib.reload(nvb.nvb_mdl)
+    importlib.reload(nvb.nvb_node)
+    importlib.reload(nvb.nvb_anim)
+    importlib.reload(nvb.nvb_animnode)
 
-    importlib.reload(nvb_props)
-    importlib.reload(nvb_ops)
-    importlib.reload(nvb_ui)
+    importlib.reload(nvb.nvb_props)
+    importlib.reload(nvb.nvb_ops)
+    importlib.reload(nvb.nvb_ui)
 else:
-    from .nvb import nvb_def
-    from .nvb import nvb_utils
-    from .nvb import nvb_io
-    from .nvb import nvb_mdl
-    from .nvb import nvb_node
-    from .nvb import nvb_anim
-    from .nvb import nvb_animnode
+    from kotorblender.nvb import nvb_def
+    from kotorblender.nvb import nvb_utils
+    from kotorblender.nvb import nvb_io
+    from kotorblender.nvb import nvb_mdl
+    from kotorblender.nvb import nvb_node
+    from kotorblender.nvb import nvb_anim
+    from kotorblender.nvb import nvb_animnode
 
-    from .nvb import nvb_props
-    from .nvb import nvb_ops
-    from .nvb import nvb_ui
+    from kotorblender.nvb import nvb_props
+    from kotorblender.nvb import nvb_ops
+    from kotorblender.nvb import nvb_ui
 
 import bpy
+import addon_utils
 #import bpy_extras
 
 
@@ -70,10 +70,14 @@ def menu_func_import(self, context):
 
 
 def register():
+    (load_dflt, nvb_loaded) = addon_utils.check('neverblender')
+    if nvb_loaded:
+        raise Exception('Do not enable both KotORBlender and Neverblender at the same time!')
+
     bpy.utils.register_module(__name__)
 
-    bpy.types.Object.nvb = bpy.props.PointerProperty(type=nvb_props.NVB_PG_OBJECT)
-    bpy.types.ImageTexture.nvb = bpy.props.PointerProperty(type=nvb_props.NVB_PG_TEXTURE)
+    bpy.types.Object.nvb = bpy.props.PointerProperty(type=nvb_props.KB_PG_OBJECT)
+    bpy.types.ImageTexture.nvb = bpy.props.PointerProperty(type=nvb_props.KB_PG_TEXTURE)
 
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
@@ -83,8 +87,29 @@ def unregister():
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
 
-    del bpy.types.Object.nvb
-    del bpy.types.ImageTexture.nvb
+    # gracefully co-exist with neverblender, within reason.
+    # if neverblender is enabled and disabled while kotorblender
+    # is enabled, kotorblender will be left in an error state
+    # and must be re-enabled to resume normal functionality
+    try:
+        (load_dflt, nvb_loaded) = addon_utils.check('neverblender')
+        if nvb_loaded:
+            # this will cleanly reload neverblender so that nvb
+            # will function after kotorblender has been disabled
+            # NOTE: the user was warned not to do this, but help anyway
+            import neverblender
+            neverblender.unregister()
+            # these are the attributes we share with nvb,
+            # we could rename, but it would change a great deal of code,
+            # it is better to keep the code similar enough to contribute
+            if 'nvb' in dir(bpy.types.Object):
+                del bpy.types.Object.nvb
+            if 'nvb' in dir(bpy.types.ImageTexture):
+                del bpy.types.ImageTexture.nvb
+            neverblender.register()
+    except:
+        del bpy.types.Object.nvb
+        del bpy.types.ImageTexture.nvb
 
     bpy.utils.unregister_module(__name__)
 

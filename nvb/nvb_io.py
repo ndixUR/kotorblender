@@ -80,7 +80,7 @@ def loadMdl(operator,
                 # adding walkmesh to scene has to be done within mdl import now
                 #wkm.importToScene(scene)
             except IOError:
-                print("Neverblender - WARNING: No walkmesh found " +
+                print("Kotorblender - WARNING: No walkmesh found " +
                       wkmFilepath)
 
     fp = os.fsencode(filepath)
@@ -146,7 +146,7 @@ def saveMdl(operator,
 
     mdlRoot = findRootDummy()
     if mdlRoot:
-        print('Neverblender: Exporting ' + mdlRoot.name)
+        print('Kotorblender: Exporting ' + mdlRoot.name)
         mdl = nvb_mdl.Mdl()
         asciiLines = []
         mdl.generateAscii(asciiLines, mdlRoot)
