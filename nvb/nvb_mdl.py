@@ -24,6 +24,8 @@ class Mdl():
         self.classification = nvb_def.Classification.UNKNOWN
         self.unknownC1      = 0
         self.ignorefog      = False
+        self.compress_quats = False
+        self.headlink       = False
 
         self.validExports   = [] # needed for skinmeshes and animations
 
@@ -110,6 +112,8 @@ class Mdl():
                 obj.nvb.classification = self.classification
                 obj.nvb.unknownC1      = self.unknownC1
                 obj.nvb.ignorefog      = (self.ignorefog >= 1)
+                obj.nvb.compress_quats = (self.compress_quats >= 1)
+                obj.nvb.headlink       = (self.headlink >= 1)
                 rootDummy = obj
 
                 obj.nvb.imporder = objIdx
@@ -222,6 +226,16 @@ class Mdl():
                         self.ignorefog = int(line[1])
                     except IndexError:
                         print("Kotorblender - WARNING: Unable to read ignorefog. Default value " + self.ignorefog)
+                elif (label == 'compress_quaternions'):
+                    try:
+                        self.compress_quats = int(line[1])
+                    except IndexError:
+                        print("Kotorblender - WARNING: Unable to read compress_quaternions. Default value " + self.compress_quats)
+                elif (label == 'headlink'):
+                    try:
+                        self.headlink = int(line[1])
+                    except IndexError:
+                        print("Kotorblender - WARNING: Unable to read headlink. Default value " + self.headlink)
                 elif (label == 'setanimationscale'):
                     try:
                         self.animscale = line[1]
@@ -308,6 +322,8 @@ class Mdl():
         self.supermodel     = rootDummy.nvb.supermodel
         self.unknownC1      = rootDummy.nvb.unknownC1
         self.ignorefog      = rootDummy.nvb.ignorefog
+        self.compress_quats = rootDummy.nvb.compress_quats
+        self.headlink       = rootDummy.nvb.headlink
         self.animscale      = rootDummy.nvb.animscale
 
         # The Names of exported geometry nodes. We'll need this for skinmeshes
@@ -326,6 +342,10 @@ class Mdl():
         asciiLines.append('classification ' + self.classification)
         asciiLines.append('classification_unk1 ' + str(self.unknownC1))
         asciiLines.append('ignorefog ' + str(int(self.ignorefog)))
+        if self.compress_quats:
+            asciiLines.append('compress_quaternions ' + str(int(self.compress_quats)))
+        if self.headlink:
+            asciiLines.append('headlink ' + str(int(self.headlink)))
         asciiLines.append('setanimationscale ' + str(round(self.animscale, 2)))
         #res = nvb_utils.searchNode(rootDummy, lambda o: o.active_material.active_texture.nvb.bumpmapped)
         #if res is not None:

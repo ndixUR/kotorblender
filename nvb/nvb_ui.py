@@ -81,11 +81,15 @@ class NVB_PANEL_EMPTY(bpy.types.Panel):
                 col.label(text = 'Supermodel:')
                 col.label(text = 'Ignore Fog:')
                 col.label(text = 'Animation Scale:')
+                if obj.nvb.classification == nvb_def.Classification.CHARACTER:
+                    col.label(text = 'Head Model:')
                 col = split.column()
                 col.prop(obj.nvb, 'classification', text = '')
                 col.prop(obj.nvb, 'supermodel', text = '')
                 col.prop(obj.nvb, 'ignorefog', text = '')
                 col.prop(obj.nvb, 'animscale', text = '')
+                if obj.nvb.classification == nvb_def.Classification.CHARACTER:
+                    col.prop(obj.nvb, 'headlink', text = '')
 
                 sep = layout.separator()
 
