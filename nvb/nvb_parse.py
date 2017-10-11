@@ -53,6 +53,9 @@ def i2(asciiBlock, intList):
     for line in asciiBlock:
         intList.append((l_int(line[0]), l_int(line[1])))
 
+def i3(asciiBlock, intList):
+    _i(asciiBlock, intList, 3)
+
 def txt(asciiBlock, txtBlock):
     """TODO: DOC."""
     # txtBlock = ['\n'+' '.join(l) for l in aciiBlock]
