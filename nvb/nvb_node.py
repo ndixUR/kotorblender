@@ -394,6 +394,7 @@ class Trimesh(GeometryNode):
         self.facelist         = FaceList()
         self.tverts           = [] # list of texture vertices
         self.tverts1          = [] # list of texture vertices
+        self.texindices1      = [] # list of texture vertex indices
         self.roomlinks        = [] # walkmesh only
         self.lytposition      = (0.0, 0.0, 0.0)
 
@@ -532,6 +533,10 @@ class Trimesh(GeometryNode):
                 elif (label == 'tverts1'):
                     numVals = l_int(line[1])
                     nvb_parse.f2(asciiNode[idx+1:idx+numVals+1], self.tverts1)
+                    self.parsed_lines.extend(range(idx,idx+numVals+1))
+                elif (label == 'texindices1'):
+                    numVals = l_int(line[1])
+                    nvb_parse.i3(asciiNode[idx+1:idx+numVals+1], self.texindices1)
                     self.parsed_lines.extend(range(idx,idx+numVals+1))
                 elif (label == 'roomlinks'):
                     try:
@@ -713,6 +718,8 @@ class Trimesh(GeometryNode):
                     tessfaceUV = mesh.tessface_uv_textures[1].data[i]
                     # Get the indices of the 3 uv's for this face
                     uvIdx = self.facelist.uvIdx[i]
+                    if len(self.texindices1) and i in self.texindices1:
+                        uvIdx = self.texindices1[i]
 
                     # BEGIN EEEKADOODLE FIX
                     # BUG: Evil eekadoodle problem where faces that have
