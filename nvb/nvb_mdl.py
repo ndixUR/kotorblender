@@ -354,6 +354,10 @@ class Mdl():
         #    ])
         # Geometry
         asciiLines.append('beginmodelgeom ' + self.name)
+        aabb = nvb_utils.searchNode(rootDummy, lambda x: x.nvb.meshtype == nvb_def.Meshtype.AABB)
+        if aabb is not None and aabb.nvb.lytposition != (0.0, 0.0, 0.0):
+            lytposition = (aabb.nvb.lytposition[0] + rootDummy.location[0], aabb.nvb.lytposition[1] + rootDummy.location[1], aabb.nvb.lytposition[2] + rootDummy.location[2])
+            asciiLines.append('  layoutposition {: .7g} {: .7g} {: .7g}'.format(*lytposition))
         self.geometryToAscii(rootDummy, asciiLines, False)
         asciiLines.append('endmodelgeom ' + self.name)
         # Animations

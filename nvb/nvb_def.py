@@ -38,6 +38,31 @@ wok_materials = [ ['wok_NotDefined'    , (0.400, 0.400, 0.400), 0.0], \
                   ['wok_StoneBridge'   , (0.081, 0.108, 0.139), 0.0] ]
 
 
+class WkmMaterial():
+    DIRT                = 1
+    OBSCURING           = 2
+    GRASS               = 3
+    STONE               = 4
+    WOOD                = 5
+    WATER               = 6
+    NONWALK             = 7
+    TRANSPARENT         = 8
+    CARPET              = 9
+    METAL               = 10
+    PUDDLES             = 11
+    SWAMP               = 12
+    MUD                 = 13
+    LEAVES              = 14
+    LAVA                = 15
+    BOTTOMLESSPIT       = 16
+    DEEPWATER           = 17
+    DOOR                = 18
+    SNOW                = 19
+    SAND                = 20
+
+    NONWALKABLE = [ NONWALK, OBSCURING, SNOW, TRANSPARENT, DEEPWATER, LAVA ]
+
+
 class DummySubtype():
     NONE      = 'NONE'
     HAND      = 'HAND'

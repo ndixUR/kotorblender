@@ -780,7 +780,8 @@ class Trimesh(GeometryNode):
             for face_idx, face in enumerate(mesh.polygons):
             #for idx in range(0, faceIdx - 1):
                 #if mesh.polygons[faceIdx].material_index == 7:
-                if face.material_index != 7:
+                #if face.material_index != 7:
+                if face.material_index not in nvb_def.WkmMaterial.NONWALKABLE:
                     if realIdx == faceIdx:
                         faceIdx = face_idx
                         break
@@ -802,26 +803,32 @@ class Trimesh(GeometryNode):
         self.roomlinks = []
         face_bonus = 0
         for face_idx, face in enumerate(mesh.polygons):
-            verts = []
+            verts = {}
             # when the wok is compiled, these faces will be sorted past
             # the walkable faces, so take the index delta into account
-            if face.material_index == 7:
+            if self.nodetype != 'aabb' and face.material_index in nvb_def.WkmMaterial.NONWALKABLE:
                 face_bonus -= 1
                 continue
             for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
                 room = int(round(room_vert_colors.data[loop_idx].color[1] * 255, 0)) - 200
+                #room = int(room_vert_colors.data[loop_idx].color[1] * 255) - 200
+                #print('room {:}'.format(room))
+                #print('color {:.7g}'.format(room_vert_colors.data[loop_idx].color[1]))
                 # we use color space for links to 55 rooms,
                 # which is likely more than the game could handle
                 if room < 0 or room > 54:
                     continue
-                verts.append(vert_idx)
-                print(room)
+                verts[vert_idx] = room
+                #print(room)
             if len(verts) < 2:
                 continue
+            vertIndices = list(verts.keys())
             for edge_idx, edge in enumerate(face.edge_keys):
-                if verts[0] in edge and verts[1] in edge:
+                #print(vertIndices)
+                #print(edge)
+                if vertIndices[0] in edge and vertIndices[1] in edge:
                     #roomlinks.append(((face_idx + face_bonus) * 3 + edge_idx, room))
-                    self.roomlinks.append(((face_idx + face_bonus) * 3 + edge_idx, room))
+                    self.roomlinks.append(((face_idx + face_bonus) * 3 + edge_idx, verts[vertIndices[0]]))
 
     def setObjectData(self, obj):
         GeometryNode.setObjectData(self, obj)
@@ -1082,6 +1089,8 @@ class Trimesh(GeometryNode):
                     asciiLines.append(s)
 
         if self.roottype == 'wok' or self.nodetype == 'aabb':
+            if self.nodetype == 'aabb':
+                self.getRoomLinks(mesh)
             if len(self.roomlinks):
                 asciiLines.append('  roomlinks ' + str(len(self.roomlinks)))
                 for link in self.roomlinks:
