@@ -308,7 +308,7 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
                                         default = nvb_def.Meshtype.TRIMESH)
     smoothgroup    = bpy.props.EnumProperty(name = 'Smoothgroup',
                                             items = [   ('SEPR', 'Separate', 'All faces have their own smoothgroup',   0),
-                                                        ('NONE', 'Single', 'All Faces belong to the same smoothgroup', 1),
+                                                        ('SING', 'Single', 'All Faces belong to the same smoothgroup', 1),
                                                         ('AUTO', 'Auto',   'Generate smoothgroups either from edges marked as sharp or edge angles when no sharp edges are present',  2)
                                                          ],
                                             default = 'AUTO')
