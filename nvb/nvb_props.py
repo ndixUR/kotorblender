@@ -109,12 +109,12 @@ class KB_PG_TEXTURE(bpy.types.PropertyGroup):
 
     # TXI props
     blending = bpy.props.EnumProperty(items=[
-        ('', '', ''),
+        ('none', '', ''),
         ('additive', 'additive', 'additive'),
         ('punchthrough', 'punchthrough', 'punchthrough'),
-    ], default='', update=prop_update)
+    ], default='none', update=prop_update)
     proceduretype = bpy.props.EnumProperty(items=[
-        ('', '', ''),
+        ('none', '', ''),
         ('dirty', 'dirty', 'dirty'),
         ('dirty2', 'dirty2', 'dirty2'),
         ('dirty3', 'dirty3', 'dirty3'),
@@ -126,12 +126,12 @@ class KB_PG_TEXTURE(bpy.types.PropertyGroup):
         ('cycle', 'cycle', 'cycle'),
         ('random', 'random', 'random'),
         ('ringtexdistort', 'ringtexdistort', 'ringtexdistort'),
-    ], default='', update=prop_update)
+    ], default='none', update=prop_update)
     filter = bpy.props.EnumProperty(items=[
-        ('', '', ''),
+        ('none', '', ''),
         ('nearest', 'nearest', 'nearest'),
         ('linear', 'linear', 'linear'),
-    ], default='', update=prop_update)
+    ], default='none', update=prop_update)
     filerange = bpy.props.IntProperty(default=0, update=prop_update)
     defaultwidth = bpy.props.IntProperty(default=0, update=prop_update)
     defaultheight = bpy.props.IntProperty(default=0, update=prop_update)
