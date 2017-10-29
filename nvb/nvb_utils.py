@@ -450,6 +450,11 @@ def copyAnimScene(scene, theOriginal, newSuffix, oldSuffix = '', parent = None):
     theCopy.name   = newName
     theCopy.parent = parent
 
+    # Do not bring in the unhandled ASCII data for geometry nodes
+    # when cloning for animation
+    if 'rawascii' in theCopy.nvb:
+        theCopy.nvb.rawascii = ''
+
     # We need to copy the data for:
     # - Lamps
     # - Meshes & materials when there are alphakeys
