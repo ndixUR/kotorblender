@@ -619,6 +619,9 @@ class Node():
                         break
 
                 for kfp in fcurve.keyframe_points:
+                    if name.startswith('orientation'):
+                        # bezier keyed orientation animation currently unsupported
+                        break
                     if kfp.interpolation == 'BEZIER':
                         name = re.sub(r'^(.+)key$', r'\1bezierkey', name)
                         break
