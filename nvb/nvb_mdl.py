@@ -343,7 +343,11 @@ class Mdl():
         asciiLines.append('classification_unk1 ' + str(self.unknownC1))
         asciiLines.append('ignorefog ' + str(int(self.ignorefog)))
         if self.compress_quats:
-            asciiLines.append('compress_quaternions ' + str(int(self.compress_quats)))
+            # quaternion compression does not work with the rotations we export,
+            # for unknown reasons...
+            # therefore, just export it as disabled for now...
+            asciiLines.append('compress_quaternions 0')
+            #asciiLines.append('compress_quaternions ' + str(int(self.compress_quats)))
         if self.headlink:
             asciiLines.append('headlink ' + str(int(self.headlink)))
         asciiLines.append('setanimationscale ' + str(round(self.animscale, 2)))
