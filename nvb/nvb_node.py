@@ -706,6 +706,7 @@ class Trimesh(GeometryNode):
 
             # Create lightmap UV map
             if (len(self.tverts1) > 0) and (mesh.tessfaces):
+                lm_idx = len(mesh.tessface_uv_textures)
                 uv = mesh.tessface_uv_textures.new(name + '_lm.uv')
                 #mesh.tessface_uv_textures.active = uv
 
@@ -715,7 +716,7 @@ class Trimesh(GeometryNode):
                     # Apply material (there is only ever one)
                     tessface.material_index = 0
                     # Grab a uv for the face
-                    tessfaceUV = mesh.tessface_uv_textures[1].data[i]
+                    tessfaceUV = mesh.tessface_uv_textures[lm_idx].data[i]
                     # Get the indices of the 3 uv's for this face
                     uvIdx = self.facelist.uvIdx[i]
                     if len(self.texindices1) and i in self.texindices1:
