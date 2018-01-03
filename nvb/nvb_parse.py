@@ -8,7 +8,10 @@ def _i(asciiBlock, intList, numVals):
         vals = []
         for idx in range(0, numVals):
             if numVals < 2 or idx > 0:
-                vals.append(l_int(line[idx]))
+                try:
+                    vals.append(l_int(line[idx]))
+                except ValueError:
+                    vals.append(l_int(l_float(line[idx])))
             else:
                 vals.append(l_float(line[idx]))
         if len(vals) > 1:
