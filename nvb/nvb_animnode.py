@@ -410,7 +410,7 @@ class Node():
                  label in (attr + 'key' for attr in self.KEY_TYPE.keys()) or \
                  label in (attr + 'bezierkey' for attr in self.KEY_TYPE.keys()):
                 # Parse all controllers: unkeyed, keyed, or bezierkeyed
-                attrname = [attr for attr in self.KEY_TYPE.keys() if attr in label][0]
+                attrname = [attr for attr in self.KEY_TYPE.keys() if label.startswith(attr)][0]
                 attr_type = self.KEY_TYPE[attrname]
                 key_type = ''
                 key_type = 'key' if label.endswith('key') else key_type
