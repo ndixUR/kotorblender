@@ -1719,8 +1719,8 @@ class Light(GeometryNode):
         self.lightpriority = 5
         self.color         = (0.0, 0.0, 0.0)
         self.ambientonly   = 1
-        self.ndynamictype  = 1
-        self.isdynamic     = 1
+        self.ndynamictype  = 0
+        self.isdynamic     = 0
         self.affectdynamic = 1
         self.negativelight = 0
         self.fadinglight   = 1
@@ -1855,7 +1855,9 @@ class Light(GeometryNode):
         obj.nvb.shadow        = (self.shadow >= 1)
         obj.nvb.lightpriority = self.lightpriority
         obj.nvb.fadinglight   = (self.fadinglight >= 1)
-        obj.nvb.isdynamic     = (self.ndynamictype >= 1) or (self.isdynamic >= 1)
+        obj.nvb.isdynamic     = self.ndynamictype
+        if obj.nvb.isdynamic == 0 and self.isdynamic >= 1:
+            obj.nvb.isdynamic = 1
         obj.nvb.affectdynamic = (self.affectdynamic >= 1)
 
         if (self.flareradius > 0) or (self.lensflares >= 1):
@@ -1919,7 +1921,7 @@ class Light(GeometryNode):
                                         str(round(color[1], 2)) + ' ' +
                                         str(round(color[2], 2)))
         asciiLines.append('  ambientonly ' + str(int(obj.nvb.ambientonly)))
-        asciiLines.append('  nDynamicType ' + str(int(obj.nvb.isdynamic)))
+        asciiLines.append('  nDynamicType ' + str(obj.nvb.isdynamic))
         asciiLines.append('  affectDynamic ' + str(int(obj.nvb.affectdynamic)))
         asciiLines.append('  shadow ' + str(int(obj.nvb.shadow)))
         asciiLines.append('  lightpriority ' + str(obj.nvb.lightpriority))

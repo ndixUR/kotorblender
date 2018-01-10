@@ -208,7 +208,7 @@ class NVB_PANEL_LIGHT(bpy.types.Panel):
         col.prop(obj.nvb, 'shadow', text='Shadows')
         col = split.column(align=True)
         col.prop(obj.nvb, 'fadinglight', text='Fading')
-        col.prop(obj.nvb, 'isdynamic', text='Is dynamic')
+        col.prop(obj.nvb, 'isdynamic', text='Dynamic Type')
         col.prop(obj.nvb, 'affectdynamic', text='Affect dynamic')
 
         sep = layout.separator()
