@@ -69,10 +69,14 @@ def loadMdl(operator,
         filetypes = ['pwk', 'dwk', 'wok']
         (wkmPath, wkmFilename) = os.path.split(filepath)
         for wkmType in filetypes:
+            if wkmFilename.endswith('.ascii'):
+                wkmFilename = os.path.splitext(wkmFilename)[0]
             wkmFilepath = os.path.join(wkmPath,
                                        os.path.splitext(wkmFilename)[0] +
                                        '.' + wkmType)
             fp = os.fsencode(wkmFilepath)
+            if not os.path.isfile(fp):
+                fp = os.fsencode(wkmFilepath + '.ascii')
             try:
                 asciiLines = [line.strip().split() for line in open(fp, 'r')]
                 wkm = nvb_mdl.Xwk(wkmType)
@@ -185,7 +189,11 @@ def saveMdl(operator,
                 wkm.generateAscii(asciiLines, wkmRoot)
 
                 (wkmPath, wkmFilename) = os.path.split(filepath)
-                wkmFilepath = os.path.join(wkmPath, os.path.splitext(wkmFilename)[0] + '.' + wkm.walkmeshType)
+                wkmType = wkm.walkmeshType
+                if wkmFilename.endswith('.ascii'):
+                    wkmFilename = os.path.splitext(wkmFilename)[0]
+                    wkmType += '.ascii'
+                wkmFilepath = os.path.join(wkmPath, os.path.splitext(wkmFilename)[0] + '.' + wkmType)
                 with open(os.fsencode(wkmFilepath), 'w') as f:
                     f.write('\n'.join(asciiLines))
         # reset exported status to false because save operation is concluding
