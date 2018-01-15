@@ -105,7 +105,7 @@ def ancestorNode(obj, test):
 
 def searchNode(obj, test):
     try:
-        if test(obj):
+        if obj and test(obj):
             return obj
     except:
         pass
