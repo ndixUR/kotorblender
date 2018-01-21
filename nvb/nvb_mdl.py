@@ -416,20 +416,33 @@ class Xwk(Mdl):
             # Walkmeshes have no rootdummys. We need to create one ourselves
             # Unless the rootdummy is in the model already, because that happens
 
+            # Also, kotormax puts the rootdummy into the PWK and probably DWK,
+            # making this not work.
+            # Even worse, it parents the use dummies to the mesh,
+            # making this doubly not work.
+
+            # Our format expectations are more like what mdlops exports,
+            # which is in line with the format used in NWN.
+
             # Look for the node parents for the list of parents. They should
             # all have the same name
             nameList = []
             for (nodeKey, node) in self.nodeDict.items():
-                if (nvb_utils.isNull(node.parentName)):
-                    # Node without
-                    raise nvb_def.MalformedMdlFile(node.name + ' has no parent.')
-                else:
-                    if node.parentName not in nameList:
-                        nameList.append(node.parentName)
-            if len(nameList) == 1:
-                self.name = nameList[0]
-            else:
-                raise nvb_def.MalformedMdlFile('Invalid parents in walkmesh.')
+                if node.parentName not in nameList:
+                    nameList.append(node.parentName)
+            #    print(node.name)
+            #    print('parent ' + node.name)
+            #    if (nvb_utils.isNull(node.parentName)):
+            #        # Node without
+            #        raise nvb_def.MalformedMdlFile(node.name + ' has no parent.')
+            #    else:
+            #        if node.parentName not in nameList:
+            #            nameList.append(node.parentName)
+            #if len(nameList) == 1:
+            #    self.name = nameList[0]
+            #else:
+            #    raise nvb_def.MalformedMdlFile('Invalid parents in walkmesh.')
+            self.name = nameList[0]
 
             if self.name in scene.objects and bpy.data.objects[self.name].nvb.dummytype != nvb_def.Dummytype.MDLROOT:
                 node = bpy.data.objects[self.name].nvb
@@ -437,16 +450,76 @@ class Xwk(Mdl):
                     node.dummytype = nvb_def.Dummytype.DWKROOT
                 else:
                     node.dummytype = nvb_def.Dummytype.PWKROOT
+                rootdummy = bpy.data.objects[self.name]
             else:
-                node = nvb_node.Dummy(self.name + '_' + self.walkmeshType)
+                #print('self ' + self.name)
+                mdl_name = self.name
+                wkm_name = self.name
+                if not wkm_name.lower().endswith('_' + self.walkmeshType):
+                    wkm_name += '_' + self.walkmeshType
+                if mdl_name.lower().endswith('_' + self.walkmeshType):
+                    mdl_name = mdl_name[0:-4]
+                #print('wkm ' + wkm_name)
+                #print('mdl ' + mdl_name)
+                node = nvb_node.Dummy(wkm_name)
                 if self.walkmeshType == 'dwk':
                     node.dummytype = nvb_def.Dummytype.DWKROOT
                 else:
                     node.dummytype = nvb_def.Dummytype.PWKROOT
-                node.name = self.name
+                node.name = wkm_name
                 rootdummy = node.addToScene(scene)
+                if mdl_name in bpy.data.objects:
+                    rootdummy.parent = bpy.data.objects[mdl_name]
+                else:
+                    pass
+                    #print(mdl_name + ' ' + wkm_name + ' ' + self.name)
+            #print('root ' + rootdummy.name)
+            mdlroot = nvb_utils.ancestorNode(rootdummy, lambda o: o.nvb.dummytype == nvb_def.Dummytype.MDLROOT)
+            if mdlroot is None and rootdummy.parent:
+                mdlroot = rootdummy.parent
+            #print('mdlroot ' + mdlroot.name)
+            if self.walkmeshType == 'dwk':
+                dp_open1 = nvb_utils.searchNode(mdlroot, lambda o: 'dwk_dp' in o.name.lower() and o.name.lower().endswith('open1_01'))
+                dp_open2 = nvb_utils.searchNode(mdlroot, lambda o: 'dwk_dp' in o.name.lower() and o.name.lower().endswith('open2_01'))
+                dp_closed01 = nvb_utils.searchNode(mdlroot, lambda o: 'dwk_dp' in o.name.lower() and o.name.lower().endswith('closed_01'))
+                dp_closed02 = nvb_utils.searchNode(mdlroot, lambda o: 'dwk_dp' in o.name.lower() and o.name.lower().endswith('closed_02'))
+                wg_open1 = nvb_utils.searchNode(mdlroot, lambda o: 'dwk_wg' in o.name.lower() and o.name.lower().endswith('open1'))
+                wg_open2 = nvb_utils.searchNode(mdlroot, lambda o: 'dwk_wg' in o.name.lower() and o.name.lower().endswith('open2'))
+                wg_closed = nvb_utils.searchNode(mdlroot, lambda o: 'dwk_wg' in o.name.lower() and o.name.lower().endswith('closed'))
+            if self.walkmeshType == 'pwk':
+                pwk_wg = nvb_utils.searchNode(mdlroot, lambda o: o.name.lower().endswith('_wg'))
+                pwk_use01 = nvb_utils.searchNode(mdlroot, lambda o: o.name.lower().endswith('pwk_use01'))
+                pwk_use02 = nvb_utils.searchNode(mdlroot, lambda o: o.name.lower().endswith('pwk_use02'))
+                #if pwk_use01:
+                #    print('use01 ' + pwk_use01.name)
+                #if pwk_use02:
+                #    print('use02 ' + pwk_use02.name)
 
             for (nodeKey, node) in self.nodeDict.items():
+                # the node names may only be recorded in the MDL,
+                # this means that the named dummy nodes already exist in-scene,
+                # use these names to translate the WKM's special node names
+                if 'dp_open1_01' in node.name.lower() and dp_open1:
+                    node.name = dp_open1.name
+                if 'dp_open2_01' in node.name.lower() and dp_open2:
+                    node.name = dp_open2.name
+                if 'dp_closed_01' in node.name.lower() and dp_closed01:
+                    node.name = dp_closed01.name
+                if 'dp_closed_02' in node.name.lower() and dp_closed02:
+                    node.name = dp_closed02.name
+                if 'dwk_wg_open1' in node.name.lower() and wg_open1:
+                    node.name = wg_open1.name
+                if 'dwk_wg_open2' in node.name.lower() and wg_open2:
+                    node.name = wg_open2.name
+                if 'dwk_wg_closed' in node.name.lower() and wg_closed:
+                    node.name = wg_closed.name
+                if node.name.lower().endswith('_wg') and pwk_wg:
+                    node.name = pwk_wg.name
+                if node.name.lower().endswith('pwk_use01') and pwk_use01:
+                    node.name = pwk_use01.name
+                if node.name.lower().endswith('pwk_use02') and pwk_use02:
+                    node.name = pwk_use02.name
+                # remove pre-existing nodes that were added as part of a model
                 if node.name in scene.objects:
                     obj = scene.objects[node.name]
                     scene.objects.unlink(obj)
