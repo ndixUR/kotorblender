@@ -16,6 +16,9 @@ def findRootDummy():
     # 4. Search all objects
 
     obj = None
+    selected_objects = [ o for o in bpy.context.scene.objects if o.select ]
+    if len(selected_objects):
+        obj = selected_objects[0]
     # Selected object
     if nvb_utils.isRootDummy(obj, nvb_def.Dummytype.MDLROOT):
         return obj
