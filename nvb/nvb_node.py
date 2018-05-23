@@ -738,8 +738,10 @@ class Trimesh(GeometryNode):
                     # Apply texture to uv face
                     if (not nvb_utils.isNull(self.bitmap2)) and material.texture_slots[1]:
                         tessfaceUV.image = material.texture_slots[1].texture.image
-                material.texture_slots[1].uv_layer = name + '_lm.uv'
-                material.texture_slots[0].uv_layer = name + '.uv'
+                if material.texture_slots[1]:
+                    material.texture_slots[1].uv_layer = name + '_lm.uv'
+                if material.texture_slots[0]:
+                    material.texture_slots[0].uv_layer = name + '.uv'
 
         # Import smooth groups as sharp edges
         if nvb_glob.importSmoothGroups:
@@ -2079,9 +2081,26 @@ class Aabb(Trimesh):
                 material.specular_intensity = wokMat[2]
             mesh.materials.append(material)
 
+        # Create UV map
+        uv = None
+        if (len(self.tverts) > 0) and (mesh.tessfaces):
+            uv = mesh.tessface_uv_textures.new(name + '.uv')
+            mesh.tessface_uv_textures.active = uv
+
         # Apply the walkmesh materials to each face
         for idx, face in enumerate(mesh.tessfaces):
             face.material_index = self.facelist.matId[idx]
+            if uv:
+                faceUV = mesh.tessface_uv_textures[0].data[idx]
+                uvIdx = self.facelist.uvIdx[idx]
+                if self.facelist.faces[idx][2] == 0:
+                    uvIdx = uvIdx[1], uvIdx[2], uvIdx[0]
+                faceUV.uv1 = self.tverts[uvIdx[0]]
+                faceUV.uv2 = self.tverts[uvIdx[1]]
+                faceUV.uv3 = self.tverts[uvIdx[2]]
+                # Apply texture to uv face
+                #if (not nvb_utils.isNull(self.bitmap)) and material.texture_slots[0]:
+                #    faceUV.image = material.texture_slots[0].texture.image
 
         mesh.update()
         return mesh
