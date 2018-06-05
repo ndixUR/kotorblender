@@ -1454,7 +1454,7 @@ class Emitter(GeometryNode):
         self.loop = False
         self.renderorder = 0
         self.m_bFrameBlending = False
-        self.m_sDepthTextureName = ''
+        self.m_sDepthTextureName = nvb_def.null
         # flags
         self.p2p = False
         self.p2p_sel = False
@@ -1619,11 +1619,9 @@ class Emitter(GeometryNode):
                     value = value.title()
             elif attrname == 'render':
                 attrname = 'render_emitter'
-                if value.title() not in ['Normal', 'Billboard_to_Local_Z', 'Billboard_to_World_Z',
-                                         'Aligned_to_World_Z', 'Aligned_to_Particle_Dir', 'Motion']:
+                if value not in ['Normal', 'Billboard_to_Local_Z', 'Billboard_to_World_Z',
+                                 'Aligned_to_World_Z', 'Aligned_to_Particle_Dir', 'Motion']:
                     value = 'NONE'
-                else:
-                    value = value.title()
             elif attrname == 'blend':
                 if value.lower() == 'punchthrough':
                     value = 'Punch-Through'
