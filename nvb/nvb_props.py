@@ -484,12 +484,12 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
                  ('Lighten', "Lighten", "Lighten", 3)],
         default='NONE', options=set())
     texture = bpy.props.StringProperty(name="Texture", description="Texture", maxlen=32, options=set())
-    chunkName = bpy.props.StringProperty(name="Chunk Name", description="Chunk Name", maxlen=16, options=set(), update=nvb_update_emitter_prop)
+    chunkName = bpy.props.StringProperty(name="Chunk Name", description="Chunk Name", maxlen=16, default='', options=set(), update=nvb_update_emitter_prop)
     twosidedtex = bpy.props.BoolProperty(name="Two-Sided Texture", description="Textures visible from front and back", default=False, options=set())
     loop = bpy.props.BoolProperty(name="Loop", description="Loop", default = False, options=set())
     renderorder = bpy.props.IntProperty(name="Render order", description="Render Order", default = 0, min = 0, options=set())
     m_bFrameBlending = bpy.props.BoolProperty(name="Frame Blending", default=False, options=set())
-    m_sDepthTextureName = bpy.props.StringProperty(name="Depth Texture Name", description="Depth Texture Name", default="NULL", maxlen=32, options=set())
+    m_sDepthTextureName = bpy.props.StringProperty(name="Depth Texture Name", description="Depth Texture Name", default=nvb_def.null, maxlen=32, options=set())
 
     # Emitter flags
     p2p         = bpy.props.BoolProperty(name="p2p", description="Use Point to Point settings", default = False, options=set())
