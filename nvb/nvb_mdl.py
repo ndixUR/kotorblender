@@ -114,6 +114,7 @@ class Mdl():
                 obj.nvb.ignorefog      = (self.ignorefog >= 1)
                 obj.nvb.compress_quats = (self.compress_quats >= 1)
                 obj.nvb.headlink       = (self.headlink >= 1)
+                obj.nvb.animscale      = self.animscale
                 rootDummy = obj
 
                 obj.nvb.imporder = objIdx
@@ -238,7 +239,7 @@ class Mdl():
                         print("Kotorblender - WARNING: Unable to read headlink. Default value " + self.headlink)
                 elif (label == 'setanimationscale'):
                     try:
-                        self.animscale = line[1]
+                        self.animscale = float(line[1])
                     except IndexError:
                         print("Kotorblender - WARNING: Unable to read animationscale. Default value " + self.animscale)
 
@@ -347,10 +348,11 @@ class Mdl():
             # for unknown reasons...
             # therefore, just export it as disabled for now...
             asciiLines.append('compress_quaternions 0')
+            # they actually work with mdlops now, not mdledit yet...
             #asciiLines.append('compress_quaternions ' + str(int(self.compress_quats)))
         if self.headlink:
             asciiLines.append('headlink ' + str(int(self.headlink)))
-        asciiLines.append('setanimationscale ' + str(round(self.animscale, 2)))
+        asciiLines.append('setanimationscale ' + str(round(self.animscale, 7)))
         #res = nvb_utils.searchNode(rootDummy, lambda o: o.active_material.active_texture.nvb.bumpmapped)
         #if res is not None:
         #    asciiLines.extend([
