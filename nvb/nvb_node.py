@@ -1317,8 +1317,9 @@ class Skinmesh(Trimesh):
         # with the same name as the group
         skingroups = []
         for objName in exportObjects:
-            if objName in obj.vertex_groups:
-                skingroups.append(obj.vertex_groups[objName])
+            for group in obj.vertex_groups:
+                if group.name.lower() == objName.lower():
+                    skingroups.append(group)
 
         vertexWeights = []
         for i, v in enumerate(obj.data.vertices):
