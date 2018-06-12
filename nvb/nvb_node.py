@@ -207,7 +207,7 @@ class GeometryNode():
             asciiLines.append('  scale ' + str(scale))
 
         # Write out the unprocessed data
-        if obj.nvb.rawascii:
+        if obj.nvb.rawascii and obj.nvb.rawascii in bpy.data.texts:
             asciiLines.append('  ' + '\n  '.join(bpy.data.texts[obj.nvb.rawascii].as_string().strip().split('\n')))
 
     def toAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
