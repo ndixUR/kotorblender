@@ -140,13 +140,17 @@ class GeometryNode():
 
 
     def addToScene(self, scene):
-        if self.name in bpy.data.objects and \
-           nvb_utils.ancestorNode(bpy.data.objects[self.name],
+        realName = nvb_utils.getRealName(self.name)
+        if realName and \
+           nvb_utils.ancestorNode(bpy.data.objects[realName],
                                   nvb_utils.isRootDummy) and \
-           nvb_utils.ancestorNode(bpy.data.objects[self.name],
-                                  nvb_utils.isRootDummy).name == self.rootname:
+           nvb_utils.ancestorNode(bpy.data.objects[realName],
+                                  nvb_utils.isRootDummy).name.lower() == self.rootname.lower():
             # name and root dummy name match, use existing object
-            obj = bpy.data.objects[self.name]
+            obj = bpy.data.objects[realName]
+            # rename object to our model's expected case
+            if realName != self.name:
+                obj.name = self.name
             scene.objects.unlink(obj)
         else:
             obj = bpy.data.objects.new(self.name, None)
