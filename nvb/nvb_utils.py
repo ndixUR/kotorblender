@@ -31,6 +31,16 @@ def getName(s):
     #return s.lower()
     return s
 
+def getRealName(s):
+    '''
+    Do a case insensitive search through existing objects,
+    returning name or None if not found
+    '''
+    try:
+        return [name for name in bpy.data.objects.keys() if name.lower() == s.lower()][0]
+    except:
+        return None
+
 
 def materialExists(diffuse = (1.0, 1.0, 1.0),
                    specular = (1.0, 1.0, 1.0),
