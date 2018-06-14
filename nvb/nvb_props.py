@@ -361,7 +361,7 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
     ambientonly   = bpy.props.BoolProperty(name = 'Ambient Only', default = False)
     lightpriority = bpy.props.IntProperty(name = 'Lightpriority', default = 3, min = 1, max = 5)
     fadinglight   = bpy.props.BoolProperty(name = 'Fading light', default = False)
-    isdynamic     = bpy.props.IntProperty(name = 'Dynamic Type', default = 0, min = 0, max = 2)
+    isdynamic     = bpy.props.IntProperty(name = 'Dynamic Type', description="0 - Light affects ONLY area static geometry\n1 - Light affects area static geometry AND dynamic area geometry and objects\n2 - Light affects ONLY dynamic area geometry and objects", default = 0, min = 0, max = 2)
     affectdynamic = bpy.props.BoolProperty(name = 'Affect Dynamic', description = 'Affect dynamic objects', default = False)
     negativelight = bpy.props.BoolProperty(name = 'Negative Light', default = False)
     lensflares    = bpy.props.BoolProperty(name = 'Lensflares', default = False)
