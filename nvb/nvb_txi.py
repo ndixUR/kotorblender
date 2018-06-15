@@ -195,7 +195,16 @@ def loadTxi(imagetexture, operator=None):
 
 def saveTxi(imagetexture, operator=None):
     try:
-        filepath = imagetexture.image.filepath
+        if imagetexture.image.filepath.startswith("//") and \
+           not operator.context.blend_data.is_saved:
+            if operator is not None:
+                operator.report(
+                    {'WARNING'},
+                    "Save blend file to export TXI with relative image path"
+                )
+            return False
+        # use of abspath for windows compatibility
+        filepath = bpy.path.abspath(imagetexture.image.filepath)
     except:
         return False
     filepath = os.path.splitext(filepath)[0] + '.new.txi'
@@ -261,10 +270,10 @@ def saveTxi(imagetexture, operator=None):
             value = 1 if value else 0
         asciiLines.append("{} {}".format(propname, str(value)))
 
-    # write txi file
+    # write txi file, join on CRLF for the windows people
     print(asciiLines)
     with open(os.fsencode(filepath), 'w') as f:
-                f.write("\n".join(asciiLines))
+                f.write("\r\n".join(asciiLines) + "\r\n")
 
     if operator is not None:
         operator.report({'INFO'}, "Exported {}".format(os.path.basename(filepath)))
