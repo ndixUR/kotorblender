@@ -23,6 +23,10 @@ def findRootDummy():
     if nvb_utils.isRootDummy(obj, nvb_def.Dummytype.MDLROOT):
         return obj
     else:
+        # Search ancestors of active object
+        obj = nvb_utils.ancestorNode(bpy.context.active_object, nvb_utils.isRootDummy)
+        if obj:
+            return obj
         # Search objects in active scene
         if nvb_glob.scene:
             for obj in nvb_glob.scene.objects:
