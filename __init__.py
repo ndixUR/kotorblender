@@ -19,7 +19,7 @@
 bl_info = {
     "name": "KotORBlender",
     "author": "Attila Gyoerkoes & J.W. Brandon",
-    "version": (1, 0),
+    "version": (1, 0, 1),
     "blender": (2, 71, 0),
     "location": "File > Import-Export, Object Properties",
     "description": "Import, export and edit Odyssey (KotOR) ASCII MDL format",
