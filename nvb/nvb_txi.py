@@ -196,7 +196,7 @@ def loadTxi(imagetexture, operator=None):
 def saveTxi(imagetexture, operator=None):
     try:
         if imagetexture.image.filepath.startswith("//") and \
-           not operator.context.blend_data.is_saved:
+           not bpy.context.blend_data.is_saved:
             if operator is not None:
                 operator.report(
                     {'WARNING'},
