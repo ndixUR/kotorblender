@@ -1625,7 +1625,7 @@ class Emitter(GeometryNode):
             elif attrname == 'render':
                 attrname = 'render_emitter'
                 if value not in ['Normal', 'Billboard_to_Local_Z', 'Billboard_to_World_Z',
-                                 'Aligned_to_World_Z', 'Aligned_to_Particle_Dir', 'Motion']:
+                                 'Aligned_to_World_Z', 'Aligned_to_Particle_Dir', 'Motion_Blur']:
                     value = 'NONE'
             elif attrname == 'blend':
                 if value.lower() == 'punchthrough':
@@ -1639,6 +1639,8 @@ class Emitter(GeometryNode):
                 else:
                     obj.nvb.p2p_type = 'Gravity'
                 # p2p_type has update method, sets p2p_sel
+                # except it doesn't seem to initially
+                obj.nvb.p2p_sel = self.p2p_sel
                 continue
             #print(attrname)
             setattr(obj.nvb, attrname, value)

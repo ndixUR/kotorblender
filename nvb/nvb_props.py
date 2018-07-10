@@ -389,7 +389,7 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
     frameend = bpy.props.IntProperty(name="End Frame", description="Frame End", default=0)
     framestart = bpy.props.IntProperty(name="Start Frame", description="Frame Start", default=0)
     grav = bpy.props.FloatProperty(name="Gravity", description="Gravity (m/s²)", default=0.0, min=0.0, unit='ACCELERATION')
-    lifeexp = bpy.props.FloatProperty(name="Lifetime", description="Life Expectancy", default=1.0, min=0.0)#, update=kb_update_lifeexp_prop)
+    lifeexp = bpy.props.FloatProperty(name="Lifetime", description="Life Expectancy", default=1.0, min=-1.0)#, update=kb_update_lifeexp_prop)
     mass = bpy.props.FloatProperty(name="Mass", description="Mass", default=1.0, min=0.0)
     p2p_bezier2 = bpy.props.FloatProperty(name="Bezier 2", description="???", default=0.0)
     p2p_bezier3 = bpy.props.FloatProperty(name="Bezier 3", description="???", default=0.0)
@@ -411,7 +411,7 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
     lightningsubdiv = bpy.props.IntProperty(name="Subdivisions", description="Lightning Subdivisions", default=0, min=0, max=12, update=nvb_update_emitter_prop)
     lightningscale  = bpy.props.FloatProperty(name="Scale", description="Lightning Scale", default=1.0, min=0.0, max=1.0)
     lightningzigzag = bpy.props.IntProperty(name="ZigZag", description="Lightning Zig-Zag", default=0, min=0, max=30)
-    alphamid = bpy.props.FloatProperty(name="Alpha mid", description="Alpha mid", default=1.0, min=0.0, max=1.0)
+    alphamid = bpy.props.FloatProperty(name="Alpha mid", description="Alpha mid", default=1.0, min=-1.0, max=1.0)
     percentstart = bpy.props.FloatProperty(name="Percent start", description="Percent start", default = 1.0, min=0.0, max=1.0)
     percentmid = bpy.props.FloatProperty(name="Percent mid", description="Percent mid", default=1.0, min=0.0, max=1.0)
     percentend = bpy.props.FloatProperty(name="Percent end", description="Percent end", default=1.0, min=0.0, max=1.0)
@@ -474,7 +474,7 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
                  ('Billboard_to_World_Z', "Billboard to world Z", "Billboard to world Z", 4),
                  ('Aligned_to_World_Z', "Aligned to world Z", "Aligned  to world Z", 5),
                  ('Aligned_to_Particle_Dir', "Aligned to particle dir.", "Aligned to particle direction", 6),
-                 ('Motion', "Motion Blur", "Motion Blur", 7)],
+                 ('Motion_Blur', "Motion Blur", "Motion Blur", 7)],
         default='NONE', options=set())
     blend = bpy.props.EnumProperty(
         name ="Blend", description="Blending Mode",
