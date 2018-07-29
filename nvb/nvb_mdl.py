@@ -365,7 +365,7 @@ class Mdl():
             lytposition = (aabb.nvb.lytposition[0],
                            aabb.nvb.lytposition[1],
                            aabb.nvb.lytposition[2])
-            if rootDummy.location != (0.0, 0.0, 0.0):
+            if rootDummy.location.to_tuple() != (0.0, 0.0, 0.0):
                 lytposition = (rootDummy.location[0],
                                rootDummy.location[1],
                                rootDummy.location[2])
