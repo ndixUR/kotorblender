@@ -540,7 +540,7 @@ class Trimesh(GeometryNode):
                     self.parsed_lines.extend(range(idx,idx+numVals+1))
                 elif (label == 'texindices1'):
                     numVals = l_int(line[1])
-                    nvb_parse.i3(asciiNode[idx+1:idx+numVals+1], self.texindices1)
+                    nvb_parse.i3(asciiNode[idx+1:idx+numVals+1], self.texindices1, initialFloat=False)
                     self.parsed_lines.extend(range(idx,idx+numVals+1))
                 elif (label == 'roomlinks'):
                     try:
@@ -723,7 +723,7 @@ class Trimesh(GeometryNode):
                     tessfaceUV = mesh.tessface_uv_textures[lm_idx].data[i]
                     # Get the indices of the 3 uv's for this face
                     uvIdx = self.facelist.uvIdx[i]
-                    if len(self.texindices1) and i in self.texindices1:
+                    if len(self.texindices1) and i < len(self.texindices1):
                         uvIdx = self.texindices1[i]
 
                     # BEGIN EEEKADOODLE FIX

@@ -1,13 +1,13 @@
 """TODO: DOC."""
 
-def _i(asciiBlock, intList, numVals):
+def _i(asciiBlock, intList, numVals, initialFloat=True):
     """Parse a float and integers into a numVals tuple into intList"""
     l_float = float
     l_int = int
     for line in asciiBlock:
         vals = []
         for idx in range(0, numVals):
-            if numVals < 2 or idx > 0:
+            if numVals < 2 or idx > 0 or not initialFloat:
                 try:
                     vals.append(l_int(line[idx]))
                 except ValueError:
@@ -56,8 +56,8 @@ def i2(asciiBlock, intList):
     for line in asciiBlock:
         intList.append((l_int(line[0]), l_int(line[1])))
 
-def i3(asciiBlock, intList):
-    _i(asciiBlock, intList, 3)
+def i3(asciiBlock, intList, initialFloat=True):
+    _i(asciiBlock, intList, 3, initialFloat)
 
 def txt(asciiBlock, txtBlock):
     """TODO: DOC."""
