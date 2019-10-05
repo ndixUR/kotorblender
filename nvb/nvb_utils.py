@@ -127,6 +127,18 @@ def searchNode(obj, test):
     return None
 
 
+def searchNodeAll(obj, test):
+    nodes = []
+    for child in obj.children:
+        nodes.extend(searchNodeAll(child, test))
+    try:
+        if obj and test(obj):
+            nodes.append(obj)
+    except:
+        pass
+    return nodes
+
+
 def isRootDummy(obj, dummytype = nvb_def.Dummytype.MDLROOT):
     if not obj:
         return False
