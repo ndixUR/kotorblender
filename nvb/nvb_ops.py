@@ -1,5 +1,6 @@
 import bpy
 import bpy_extras
+import bmesh
 
 from . import nvb_def
 from . import nvb_utils
@@ -7,6 +8,146 @@ from . import nvb_io
 from . import nvb_txi
 
 from mathutils import Matrix, Vector, Quaternion
+
+class NVBCHILDREN_SMOOTHGROUP(bpy.types.Operator):
+    bl_idname = "nvb.children_smoothgroup"
+    bl_label = "Smoothgroup settings on descendants"
+    #bl_property = 'action'
+    bl_options = {'UNDO'}
+
+    action = bpy.props.StringProperty()
+
+    def execute(self, context):
+        descendants = nvb_utils.searchNodeAll(
+            context.object, lambda o: o.type == 'MESH'
+        )
+        for d in descendants:
+            d.nvb.smoothgroup = self.action
+        return {'FINISHED'}
+
+
+class NVBSMOOTHGROUP_TOGGLE(bpy.types.Operator):
+    bl_idname = "nvb.smoothgroup_toggle"
+    bl_label = "Smoothgroup toggle"
+    bl_options = {'UNDO'}
+
+    sg_number = bpy.props.IntProperty()
+    activity = bpy.props.IntProperty(default=0)
+
+    def execute(self, context):
+        bm = bmesh.from_edit_mesh(context.object.data)
+        # the smoothgroup data layer
+        sg_layer = bm.faces.layers.int.get(nvb_def.sg_layer_name)
+        # convert sg_number to actual sg bitflag value
+        sg_value = pow(2, self.sg_number)
+        for face in bm.faces:
+            if not face.select:
+                continue
+            #print("face sg before: {}".format(face[sg_layer]))
+            if sg_value & face[sg_layer]:
+                # turn off for face
+                face[sg_layer] &= ~sg_value
+            else:
+                # turn on for face
+                face[sg_layer] |= sg_value
+            #print("face sg after: {}".format(face[sg_layer]))
+        bmesh.update_edit_mesh(context.object.data)
+        return {'FINISHED'}
+
+
+class NVBSMOOTHGROUP_GENERATE(bpy.types.Operator):
+    bl_idname = "nvb.smoothgroup_generate"
+    bl_label = "Smoothgroup generate"
+    bl_options = {'UNDO'}
+
+    action = bpy.props.EnumProperty(items=(
+        ('ALL', 'All Faces', 'Generate smoothgroups for all faces, replacing current values'),
+        ('EMPTY', 'Empty Faces', 'Generate smoothgroups for all faces without current assignments'),
+        ('SEL', 'Selected Faces', 'Generate smoothgroups for all selected faces, replacing current values')
+    ))
+
+    def execute(self, context):
+        ob = context.object
+
+        # switch into object mode so that the mesh gets committed,
+        # and sg layer is available and modifiable
+        initial_mode = ob.mode
+        bpy.ops.object.mode_set(mode='OBJECT')
+        #ob.data.update(True, True)
+        # copy the mesh, applying modifiers w/ render settings
+        mesh = ob.to_mesh(scene=context.scene, apply_modifiers=True, settings='RENDER')
+        #mesh.update(True, True)
+
+        # get, or create, the smoothgroups data layer on the object mesh (not the copy)
+        sg_list = ob.data.polygon_layers_int.get(nvb_def.sg_layer_name)
+        if sg_list is None:
+            sg_list = ob.data.polygon_layers_int.new(nvb_def.sg_layer_name)
+        #ob.data.update()
+        #mesh.calc_tessface()
+
+        # make all the faces on mesh copy smooth,
+        # allowing calc_smooth_groups to work
+        for face in mesh.polygons:
+            face.use_smooth = True
+        (sg, sg_number) = mesh.calc_smooth_groups(use_bitflags=True)
+        #print(sg)
+
+        # apply the calculated smoothgroups
+        if self.action == 'ALL':
+            sg_list.data.foreach_set('value', sg)
+        else:
+            for face in mesh.polygons:
+                if (self.action == 'EMPTY' and \
+                    sg_list.data[face.index].value == 0) or \
+                   (self.action == 'SEL' and face.select):
+                    sg_list.data[face.index].value = sg[face.index]
+
+        # return object to original mode
+        bpy.ops.object.mode_set(mode=initial_mode)
+        # remove the copied mesh
+        bpy.data.meshes.remove(mesh)
+        return {'FINISHED'}
+
+
+class NVBSMOOTHGROUP_SELECT(bpy.types.Operator):
+    bl_idname = "nvb.smoothgroup_select"
+    bl_label = "Smoothgroup select"
+    #bl_property = 'action'
+    bl_options = {'UNDO'}
+
+    sg_number = bpy.props.IntProperty()
+    action = bpy.props.EnumProperty(items=(
+        ('SEL', 'Select', 'Select faces with this smoothgroup'),
+        ('DESEL', 'Deselect', 'Deselect faces with this smoothgroup')
+    ))
+
+    def description(self, context):
+        if self.action == 'SEL':
+            return "Select faces with this smoothgroup"
+        else:
+            return "Deselect faces with this smoothgroup"
+
+    def execute(self, context):
+        bm = bmesh.from_edit_mesh(context.object.data)
+        bm.faces.ensure_lookup_table()
+        # the smoothgroup data layer
+        sg_layer = bm.faces.layers.int.get(nvb_def.sg_layer_name)
+        #print("test with #{} and sel/desel: {}".format(self.sg_number, str(sel)))
+        # convert sg_number to actual sg bitflag value
+        sg_value = pow(2, self.sg_number)
+
+        for face in bm.faces:
+            if sg_value & face[sg_layer]:
+                # select/deselect face
+                #print("select set: {}".format(str(sel)))
+                face.select_set(self.action == 'SEL')
+        # using this causes ALL connected geometry to be selected,
+        # including additional faces, undesirable
+        #bm.select_flush(sel)
+        # required to get the selection change to show in the 3D view
+        bmesh.update_edit_mesh(context.object.data)
+        return {'FINISHED'}
+
 
 class NVBTEXTURE_IO(bpy.types.Operator):
     bl_idname = "nvb.texture_info_io"

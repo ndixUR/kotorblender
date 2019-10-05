@@ -309,7 +309,8 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
     smoothgroup    = bpy.props.EnumProperty(name = 'Smoothgroup',
                                             items = [   ('SEPR', 'Separate', 'All faces have their own smoothgroup',   0),
                                                         ('SING', 'Single', 'All Faces belong to the same smoothgroup', 1),
-                                                        ('AUTO', 'Auto',   'Generate smoothgroups either from edges marked as sharp or edge angles when no sharp edges are present',  2)
+                                                        ('AUTO', 'Auto',   'Generate smoothgroups either from edges marked as sharp or edge angles when no sharp edges are present',  2),
+                                                        ('DRCT', 'Direct', 'Use imported and directly defined smoothgroups, select smoothgroups for geometry with unset smoothgroups by using Auto algorithm', 3)
                                                          ],
                                             default = 'AUTO')
 

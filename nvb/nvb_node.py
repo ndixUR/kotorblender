@@ -764,6 +764,11 @@ class Trimesh(GeometryNode):
             bm.free()
             del bm
             mesh.show_edge_sharp = True
+            mesh.update()
+            # load all smoothgroup numbers into a mesh data layer per-poly
+            mesh_sg_list = mesh.polygon_layers_int.new(nvb_def.sg_layer_name)
+            #print("sg list {} shdgr {}".format(len(mesh_sg_list.data), len(self.facelist.shdgr)))
+            mesh_sg_list.data.foreach_set('value', self.facelist.shdgr)
 
         if self.roottype == 'wok' and len(self.roomlinks):
             self.setRoomLinks(mesh)
@@ -996,11 +1001,16 @@ class Trimesh(GeometryNode):
         tessfaces     = mesh.tessfaces
         tessfaces_uvs = mesh.tessface_uv_textures.active
         tessfaces_uvs_lm = False
+        smgroups_layer = mesh.polygon_layers_int.get(nvb_def.sg_layer_name)
         if len(mesh.tessface_uv_textures) > 1:
             tessfaces_uvs_lm = mesh.tessface_uv_textures[1]
         for idx in range(len(tessfaces)):
             tface   = tessfaces[idx]
             smGroup = smoothGroups[idx]
+            if obj.nvb.smoothgroup == 'DRCT' and \
+               smgroups_layer is not None and \
+               smgroups_layer.data[idx].value != 0:
+                smGroup = smgroups_layer.data[idx].value
             matIdx  = tface.material_index
 
             # We triangulated, so faces are always triangles

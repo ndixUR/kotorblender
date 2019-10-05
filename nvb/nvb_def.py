@@ -11,6 +11,7 @@ class MalformedMdlFile(Exception):
 
 # Some presets
 fps = 30
+sg_layer_name  = 'smoothgroups'
 shagrPrefix    = 'shadegr.'
 animdataPrefix = 'anim.'
 wok_materials = [ ['wok_NotDefined'    , (0.400, 0.400, 0.400), 0.0], \
