@@ -139,6 +139,14 @@ def searchNodeAll(obj, test):
     return nodes
 
 
+def searchNodeInModel(obj, test):
+    '''
+    Helper to search through entire model from any starting point in hierarchy;
+    walks up to model root and performs find-one search.
+    '''
+    return searchNode(ancestorNode(obj, isRootDummy), test)
+
+
 def isRootDummy(obj, dummytype = nvb_def.Dummytype.MDLROOT):
     if not obj:
         return False
