@@ -2,6 +2,7 @@
 import os
 import collections
 import enum
+import re
 from datetime import datetime
 
 import bpy
@@ -26,8 +27,6 @@ class Mdl():
         self.ignorefog      = False
         self.compress_quats = False
         self.headlink       = False
-
-        self.validExports   = [] # needed for skinmeshes and animations
 
 
     def loadAsciiNode(self, asciiBlock):
@@ -105,8 +104,9 @@ class Mdl():
             # If the first node has a parent or isn't a dummy we don't
             # even try to import the mdl
             (nodeKey, node) = next(it)
-            if (type(node) == nvb_node.Dummy) and (nvb_utils.isNull(node.parentName)):
-                obj                = node.addToScene(scene)
+            if (type(node) == nvb_node.Dummy) and \
+               (nvb_utils.isNull(node.parentName)):
+                obj                    = node.addToScene(scene)
                 obj.nvb.dummytype      = nvb_def.Dummytype.MDLROOT
                 obj.nvb.supermodel     = self.supermodel
                 obj.nvb.classification = self.classification
@@ -134,23 +134,31 @@ class Mdl():
                     if obj.parent is not None:
                         print("WARNING: Node already parented: {}".format(obj.name))
                         pass
-                    elif node.parentName in bpy.data.objects and \
-                         nvb_utils.ancestorNode(bpy.data.objects[node.parentName],
-                                                nvb_utils.isRootDummy).name == self.name:
-                        # parent named node exists and is under a root dummy
-                        # that shares our model's name, so use it.
+                    elif rootDummy and node.parentName in bpy.data.objects and \
+                         nvb_utils.ancestorNode(
+                             bpy.data.objects[node.parentName],
+                             nvb_utils.isRootDummy
+                         ).name == rootDummy.name:
+                        # parent named node exists and is in our model
                         obj.parent = bpy.data.objects[node.parentName]
                         if node.parentName != self.name:
                             # child of non-root, preserve orientation
                             obj.matrix_parent_inverse = obj.parent.matrix_world.inverted()
                     else:
+                        # parent node was not found in our model,
+                        # this should mean that a node of the same name already
+                        # existed in the scene,
+                        # perform search for parent node in our model,
+                        # taking into account blender .001 suffix naming scheme,
+                        # note: only searching 001-030
                         found = False
-                        for altname in [node.parentName + '.{:03d}'.format(i) for i in range(1,20)]:
+                        for altname in [node.parentName + '.{:03d}'.format(i) for i in range(1,30)]:
                             if altname in bpy.data.objects and \
-                               nvb_utils.ancestorNode(bpy.data.objects[altname],
-                                                      nvb_utils.isRootDummy).name == self.name:
-                                # parent named node exists with suffix
-                                # shares mdl root dummy name, so use it.
+                               nvb_utils.ancestorNode(
+                                   bpy.data.objects[altname],
+                                   nvb_utils.isRootDummy
+                               ).name == rootDummy.name:
+                                # parent node in our model exists with suffix
                                 obj.parent = bpy.data.objects[altname]
                                 obj.matrix_parent_inverse = obj.parent.matrix_world.inverted()
                                 found = True
@@ -277,7 +285,7 @@ class Mdl():
                     else:
                         raise nvb_def.MalformedMdlFile('Unexpected "doneanim" at line' + str(idx))
 
-    def geometryToAscii(self, bObject, asciiLines, simple = False):
+    def geometryToAscii(self, bObject, asciiLines, simple = False, nameDict = None):
 
         nodeType = nvb_utils.getNodeType(bObject)
         switch = {'dummy':      nvb_node.Dummy,
@@ -294,7 +302,7 @@ class Mdl():
         except KeyError:
             raise nvb_def.MalformedMdlFile('Invalid node type')
 
-        node.toAscii(bObject, asciiLines, self.validExports, self.classification, simple)
+        node.toAscii(bObject, asciiLines, self.classification, simple, nameDict=nameDict)
 
         '''
         for child in bObject.children:
@@ -306,12 +314,12 @@ class Mdl():
         childList.sort(key=lambda tup: tup[0])
 
         for (imporder, child) in childList:
-            self.geometryToAscii(child, asciiLines, simple)
+            self.geometryToAscii(child, asciiLines, simple, nameDict=nameDict)
 
     def animationsToAscii(self, asciiLines):
         for scene in bpy.data.scenes:
             animRootDummy = nvb_utils.getAnimationRootdummy(scene)
-            if animRootDummy and self.validExports:
+            if animRootDummy:
                 # Check the name of the roodummy
                 # if animRootDummy.name.rfind(self.validExports[0]):
                 anim = nvb_anim.Animation()
@@ -329,7 +337,38 @@ class Mdl():
 
         # The Names of exported geometry nodes. We'll need this for skinmeshes
         # and animations
-        nvb_utils.getValidExports(rootDummy, self.validExports)
+        # this mechanism has been superceded by the following name map
+        #nvb_utils.getValidExports(rootDummy, self.validExports)
+
+        # feature: export of models loaded in scene multiple times
+        # construct a name map that points any NAME.00n names to their base name,
+        # needed for model and node names as well as parent node references
+        object_name_map = {}
+        all_nodes = nvb_utils.searchNodeAll(rootDummy, bool)
+        for node in all_nodes:
+            #print('name: {}'.format(node.name))
+            match = re.match(r'^(.+)\.\d\d\d$', node.name)
+            if match:
+                remap_name = True
+                # if a node matching base name but without .00n suffix exists
+                # in this model, do not remap name
+                for test_node in all_nodes:
+                    if test_node.name.lower() == match.group(1).lower():
+                        remap_name = False
+                        break
+                # if the node base name has already been remapped, don't repeat
+                if match.group(1) in object_name_map.values():
+                    remap_name = False
+                # add the name mapping
+                if remap_name:
+                    object_name_map[node.name] = match.group(1)
+        #print(object_name_map)
+        # change the model name if root node is in object name map
+        if self.name in object_name_map:
+            self.name = object_name_map[self.name]
+        # set object_name_map to none if feature is unused
+        if not len(object_name_map.keys()):
+            object_name_map = None
 
         # Header
         currentTime   = datetime.now()
@@ -370,7 +409,7 @@ class Mdl():
                                rootDummy.location[1],
                                rootDummy.location[2])
             asciiLines.append('  layoutposition {: .7g} {: .7g} {: .7g}'.format(*lytposition))
-        self.geometryToAscii(rootDummy, asciiLines, False)
+        self.geometryToAscii(rootDummy, asciiLines, False, nameDict=object_name_map)
         asciiLines.append('endmodelgeom ' + self.name)
         # Animations
         if 'ANIMATION' in exports:

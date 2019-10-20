@@ -1,4 +1,5 @@
 """TODO: DOC."""
+import re
 import mathutils
 import bpy
 import bpy_extras.image_utils
@@ -140,21 +141,8 @@ class GeometryNode():
 
 
     def addToScene(self, scene):
-        realName = nvb_utils.getRealName(self.name)
-        if realName and \
-           nvb_utils.ancestorNode(bpy.data.objects[realName],
-                                  nvb_utils.isRootDummy) and \
-           nvb_utils.ancestorNode(bpy.data.objects[realName],
-                                  nvb_utils.isRootDummy).name.lower() == self.rootname.lower():
-            # name and root dummy name match, use existing object
-            obj = bpy.data.objects[realName]
-            # rename object to our model's expected case
-            if realName != self.name:
-                obj.name = self.name
-            scene.objects.unlink(obj)
-        else:
-            obj = bpy.data.objects.new(self.name, None)
-            self.setObjectData(obj)
+        obj = bpy.data.objects.new(self.name, None)
+        self.setObjectData(obj)
         scene.objects.link(obj)
         return obj
 
@@ -178,8 +166,10 @@ class GeometryNode():
         scaled[2][3] = scaled[2][3] * p_mw_scale[2]
         return scaled
 
-    def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        if obj.parent:
+    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict = None):
+        if obj.parent and nameDict and obj.parent.name in nameDict:
+            asciiLines.append('  parent ' + nameDict[obj.parent.name])
+        elif obj.parent:
             asciiLines.append('  parent ' + obj.parent.name)
         else:
             asciiLines.append('  parent ' + nvb_def.null)
@@ -214,9 +204,12 @@ class GeometryNode():
         if obj.nvb.rawascii and obj.nvb.rawascii in bpy.data.texts:
             asciiLines.append('  ' + '\n  '.join(bpy.data.texts[obj.nvb.rawascii].as_string().strip().split('\n')))
 
-    def toAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        asciiLines.append('node ' + self.nodetype + ' ' + obj.name)
-        self.addDataToAscii(obj, asciiLines, exportObjects, classification, simple)
+    def toAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict = None):
+        if nameDict and obj.name in nameDict:
+            asciiLines.append('node ' + self.nodetype + ' ' + nameDict[obj.name])
+        else:
+            asciiLines.append('node ' + self.nodetype + ' ' + obj.name)
+        self.addDataToAscii(obj, asciiLines, classification, simple, nameDict=nameDict)
         asciiLines.append('endnode')
 
     def addUnparsedToRaw(self, asciiNode):
@@ -251,8 +244,10 @@ class Dummy(GeometryNode):
                 obj.nvb.dummysubtype = element[1]
                 break
 
-    def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        if obj.parent:
+    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
+        if obj.parent and nameDict and obj.parent.name in nameDict:
+            asciiLines.append('  parent ' + nameDict[obj.parent.name])
+        elif obj.parent:
             asciiLines.append('  parent ' + obj.parent.name)
         else:
             asciiLines.append('  parent ' + nvb_def.null)
@@ -355,8 +350,8 @@ class Reference(GeometryNode):
         obj.nvb.reattachable = (self.reattachable == 1)
 
 
-    def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        GeometryNode.addDataToAscii(self, obj, asciiLines, exportObjects, classification)
+    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
+        GeometryNode.addDataToAscii(self, obj, asciiLines, classification, nameDict=nameDict)
         asciiLines.append('  refmodel ' + obj.nvb.refmodel)
         asciiLines.append('  reattachable ' + str(int(obj.nvb.reattachable)))
 
@@ -1116,8 +1111,8 @@ class Trimesh(GeometryNode):
         bpy.data.meshes.remove(mesh)
 
 
-    def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        GeometryNode.addDataToAscii(self, obj, asciiLines, exportObjects, classification, simple)
+    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
+        GeometryNode.addDataToAscii(self, obj, asciiLines, classification, simple, nameDict=nameDict)
 
         color = obj.nvb.ambientcolor
         asciiLines.append('  ambient ' +    str(round(color[0], 2)) + ' ' +
@@ -1237,8 +1232,8 @@ class Danglymesh(Trimesh):
                 asciiLines.append('    0.0')
 
 
-    def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        Trimesh.addDataToAscii(self, obj, asciiLines, exportObjects, classification)
+    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
+        Trimesh.addDataToAscii(self, obj, asciiLines, classification, nameDict=nameDict)
 
         asciiLines.append('  period '       + str(round(obj.nvb.period, 3)))
         asciiLines.append('  tightness '    + str(round(obj.nvb.tightness, 3)))
@@ -1325,15 +1320,18 @@ class Skinmesh(Trimesh):
 
         self.addSkinGroupsToObject(obj)
 
-    def addWeightsToAscii(self, obj, asciiLines, exportObjects):
+    def addWeightsToAscii(self, obj, asciiLines):
         # Get a list of skingroups for this object:
         # A vertex group is a skingroup if there is an object in the mdl
         # with the same name as the group
         skingroups = []
-        for objName in exportObjects:
-            for group in obj.vertex_groups:
-                if group.name.lower() == objName.lower():
-                    skingroups.append(group)
+        for group in obj.vertex_groups:
+            if nvb_utils.searchNodeInModel(
+                obj,
+                lambda o, test_name=group.name:
+                    o.name == test_name or \
+                    re.match(r'{}\.\d\d\d'.format(test_name), o.name)):
+                skingroups.append(group)
 
         vertexWeights = []
         for i, v in enumerate(obj.data.vertices):
@@ -1360,10 +1358,10 @@ class Skinmesh(Trimesh):
             asciiLines.append(line)
 
 
-    def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        Trimesh.addDataToAscii(self, obj, asciiLines, exportObjects, classification)
+    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
+        Trimesh.addDataToAscii(self, obj, asciiLines, classification, nameDict=nameDict)
 
-        self.addWeightsToAscii(obj, asciiLines, exportObjects)
+        self.addWeightsToAscii(obj, asciiLines)
 
 
 class Emitter(GeometryNode):
@@ -1672,8 +1670,8 @@ class Emitter(GeometryNode):
         return obj
 
 
-    def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        GeometryNode.addDataToAscii(self, obj, asciiLines, exportObjects, classification, simple)
+    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
+        GeometryNode.addDataToAscii(self, obj, asciiLines, classification, simple, nameDict=nameDict)
 
         # export the copious amounts of emitter data
         for attrname in self.emitter_attrs:
@@ -1923,8 +1921,8 @@ class Light(GeometryNode):
                                                 str(round(flare.colorshift[2], 2)) )
         asciiLines.append('  flareradius ' + str(round(obj.nvb.flareradius, 1)))
 
-    def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        GeometryNode.addDataToAscii(self, obj, asciiLines, exportObjects, classification)
+    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
+        GeometryNode.addDataToAscii(self, obj, asciiLines, classification, nameDict=nameDict)
 
         lamp = obj.data
         color = (lamp.color[0], lamp.color[1], lamp.color[2])
@@ -2047,8 +2045,10 @@ class Aabb(Trimesh):
                                   str(node[6]) )
 
 
-    def addDataToAscii(self, obj, asciiLines, exportObjects = [], classification = nvb_def.Classification.UNKNOWN, simple = False):
-        if obj.parent:
+    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
+        if obj.parent and nameDict and obj.parent.name in nameDict:
+            asciiLines.append('  parent ' + nameDict[obj.parent.name])
+        elif obj.parent:
             asciiLines.append('  parent ' + obj.parent.name)
         else:
             asciiLines.append('  parent ' + nvb_def.null)
