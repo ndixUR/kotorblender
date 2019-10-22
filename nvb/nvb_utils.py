@@ -117,13 +117,13 @@ def searchNode(obj, test):
     try:
         if obj and test(obj):
             return obj
+        match = None
+        for child in obj.children:
+            match = searchNode(child, test)
+            if match is not None:
+                return match
     except:
         pass
-    match = None
-    for child in obj.children:
-        match = searchNode(child, test)
-        if match is not None:
-            return match
     return None
 
 
