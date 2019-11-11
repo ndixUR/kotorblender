@@ -194,37 +194,105 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
     #bl_property = 'action'
     bl_options = {'UNDO'}
 
-    def boner(self, amt, obj, parent=None, pbone=None):
-        bone = None
+    def child_pseudobones(self, obj):
+        psb = []
+        if obj is None or len(obj.children) < 1:
+            return psb
+        for c in obj.children:
+            if self.is_pseudobone(c) or self.is_control_handle(c):
+                psb.append(c)
+        return psb
+
+    def is_pseudobone(self, obj):
+        if obj is None:
+            return False
         if obj.nvb.meshtype == nvb_def.Meshtype.TRIMESH and \
            not obj.nvb.render:
-            bone = amt.edit_bones.new(obj.name + 'Bone')
-            bone.parent = pbone
-            bone.head = pbone.tail
-            bone.tail = obj.matrix_world.to_translation()
-            #+ parent.matrix_world.to_translation()
-            '''
+            return True
+        #if obj.type == 'EMPTY' and \
+        #   len(obj.children) and \
+        #   len(self.child_pseudobones(obj)):
+        #    return True
+        return False
+
+    def is_control_handle(self, obj):
+        if obj is None:
+            return False
+        if obj.type == 'EMPTY' and \
+           len(obj.children):
+            return True
+        return False
+
+    def nearest_pseudobone(self, obj, direction_up=False, first=True):
+        if obj is None:
+            return None
+        if not first and direction_up and self.is_control_handle(obj):
+            return obj
+        if not first and self.is_pseudobone(obj):
+            return obj
+        if direction_up:
+            return self.nearest_pseudobone(obj.parent, True, False)
+        else:
+            for c in obj.children:
+                r = self.nearest_pseudobone(c, False, False)
+                if r is not None:
+                    return r
+        return None
+
+
+    def boner(self, amt, obj, parent=None, pbone=None):
+        bone = None
+        parent_pseudobone = (parent is not None and \
+                             parent.nvb.meshtype == nvb_def.Meshtype.TRIMESH and \
+                             not parent.nvb.render)
+        if self.is_pseudobone(obj) or self.is_control_handle(obj): # or has_pseudobone:
+            bone_name = obj.name
+            obj.name = 'PSB_' + obj.name
+            #bone = amt.edit_bones.new(obj.name + 'Bone')
+            bone = amt.edit_bones.new(bone_name)
             if pbone is not None:
-                #bone.parent = amt.edit_bones[parent.name + 'Bone']
                 bone.parent = pbone
-                bone.head = bone.parent.tail
-                bone.use_connect = False
-                (trans, rot, scale) = bone.parent.matrix.decompose()
-                vector = trans
-                if not isinstance(rot, Quaternion):
-                    rot = rot.to_quaternion()
-                bone.tail = rot * obj.rotation_quaternion * bone.head
+                #bone.head = pbone.tail
+            #else:
+                #bone.use_connect = False
+                #bone.head = obj.matrix_world.to_translation()
+            #bone.head = pbone.tail
+            bone.head = obj.matrix_world.to_translation()
+            #bone.tail = obj.matrix_world.to_translation()
+            print(obj.matrix_world.to_translation().to_tuple())
+            #+ parent.matrix_world.to_translation()
+            tail_loc = Vector((0.0, 0.0, 0.0))
+            print('{} {} {}'.format(obj.name, len(self.child_pseudobones(obj)), len(obj.children)))
+            if len(self.child_pseudobones(obj)) > 0:
+                tail_loc = sum((Vector(c.matrix_world.to_translation()) for c in self.child_pseudobones(obj)), Vector()) / len(self.child_pseudobones(obj))
+                print('averaged child tail:')
+                print(tail_loc)
+                print(tail_loc.length)
+                #if obj.type == 'EMPTY':
+                #    tail_loc = tail_loc.orthogonal()
+                if tail_loc.length < 0.0001 or obj.type == 'EMPTY':
+                    tail_loc = Vector((0.0, 0.05, 0.0)) + bone.head
+
+                #tail_loc = Vector((0.0, 0.0, 0.0))
+                #for c in self.child_pseudobones(obj):
+                #    tail_loc[0] += c.matrix_world.to_translation().x
+                #    tail_loc[1] += c.matrix_world.to_translation().y
+                #    tail_loc[2] += c.matrix_world.to_translation().z
+                #tail_loc[0] /= float(len(obj.children))
+                #tail_loc[1] /= float(len(obj.children))
+                #tail_loc[2] /= float(len(obj.children))
+                #print('averaged child tail:')
+                #print(tail_loc)
             else:
-                #bone.head = obj.location
-                bone.tail = obj.location
-                rot = obj.rotation_euler
-                if not isinstance(rot, Quaternion):
-                    rot = rot.to_quaternion()
-                #rot = Matrix.Translation((0, 0, 0))
-                #vector = (1, 0, 0)
-                bone.head = rot * obj.rotation_quaternion * bone.tail
-            #bone.tail = rot * Vector(vector) + bone.head
-            '''
+                #tail_loc = obj.matrix_world.to_translation().to_tuple()
+                print(obj.name)
+                print(obj.bound_box)
+                tail_loc = (2 * (sum((Vector(p) for p in obj.bound_box), Vector()) / 8))
+                tail_loc.rotate(obj.matrix_world)
+                tail_loc += bone.head
+            bone.tail = Vector(tail_loc)
+        #else:
+        #    pbone = None
         if bone is None:
             bone = pbone
         for c in obj.children:
@@ -232,13 +300,135 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
             #print(obj.nvb.render)
             self.boner(amt, c, obj, bone)
 
+    def adjust_control_handles(self, amt, edit_bone):
+        if edit_bone is None:
+            return
+        obj_name = 'PSB_' + edit_bone.name
+        obj = bpy.data.objects.get(obj_name)
+        if self.is_control_handle(obj):
+            print(edit_bone.name)
+            print(edit_bone.matrix)
+            edit_bone.use_relative_parent = True
+            c_obj = self.nearest_pseudobone(obj)
+            p_obj = self.nearest_pseudobone(obj, direction_up=True)
+            c_bone = None
+            p_bone = None
+            if c_obj is not None:
+                c_bone = amt.edit_bones.get(c_obj.name[4:])
+                print("child_obj {}".format(c_obj.name))
+            if p_obj is not None:
+                p_bone = amt.edit_bones.get(p_obj.name[4:])
+                print("parent_obj {}".format(p_obj.name))
+                print("parent_obj {}".format(amt.edit_bones.keys()))
+            vec = Vector()
+            if c_bone is None and p_bone is None:
+                vec = Vector((0.0, 0.05, 0.0))
+            if c_bone is not None:
+                vec += c_bone.vector
+                print("child {}".format(c_bone.name))
+            if p_bone is not None:
+                vec += p_bone.vector
+                print("parent {}".format(p_bone.name))
+            # d = c - a, o = b - a, c = vec.tail, a = vec.head, b = edit_bone.head
+            # ctl_vec = a + (o dot d)/(d dot d)*d - b
+            a = edit_bone.tail
+            b = edit_bone.head
+            if p_bone is not None:
+                #a += p_bone.vector
+                # parent control handle
+                a = p_bone.tail
+                if a == b:
+                    # parent pseudobone
+                    a = p_bone.head
+            c = edit_bone.head
+            if c_bone is not None:
+                c = c_bone.tail
+            d = c - a
+            o = b - a
+            print("a = {}".format(a))
+            print("b = {}".format(b))
+            print("c = {}".format(c))
+            #ctl_vec = a + ((b - a).dot(c)/(vec.dot(vec))*vec) - b
+            ctl_vec = a + o.dot(d)/d.dot(d)*d - b
+            print(ctl_vec)
+            print(edit_bone.head)
+            print(edit_bone.tail)
+            # standardize ctl_vec length
+            print(ctl_vec)
+            print(ctl_vec.normalized())
+            if p_bone is None or not self.is_control_handle(p_obj):
+                ctl_vec.length = 0.05
+            print(ctl_vec)
+            edit_bone.tail = ctl_vec + edit_bone.head
+            print(edit_bone.tail)
+            print(edit_bone.matrix)
+            print(bpy.data.objects['Armature'].matrix_world * edit_bone.matrix)
+
+        for c in edit_bone.children:
+            self.adjust_control_handles(amt, c)
+
+
+    def flatten_old_pseudobones(self, amt, obj):
+        for c in obj.children:
+            self.flatten_old_pseudobones(amt, c)
+        #print(m)
+        #if self.is_pseudobone(obj) or self.is_control_handle(obj):
+        if obj.name[:4] == 'PSB_':
+            m = obj.matrix_world
+            obj.parent = bpy.data.objects['cutscenedummy']
+            obj.matrix_parent_inverse = bpy.data.objects['cutscenedummy'].matrix_world.inverted()
+            #print(obj.matrix_world)
+            #print(obj.matrix_world)
+            obj.matrix_world = m
+
+    def child_to_bones(self, amt, obj):
+        if obj is None:
+            return
+
+        #if not self.is_pseudobone(obj) and not self.is_control_handle(obj):
+        #if self.is_pseudobone(obj) or self.is_control_handle(obj):
+        if obj.name[:4] == 'PSB_':
+            #parent_bone_name = obj.parent.name
+            #if parent_bone_name[:4] == 'PSB_':
+            #    parent_bone_name = parent_bone_name[4:]
+            parent_bone_name = obj.name
+            if parent_bone_name[:4] == 'PSB_':
+                parent_bone_name = parent_bone_name[4:]
+            #print("{} => {}".format(obj.name, obj.parent.name))
+            print("{} => {}".format(obj.name, parent_bone_name))
+            if amt.data.edit_bones.find(parent_bone_name) != -1:
+                print('add constraint')
+                ct = obj.constraints.new(type="CHILD_OF")
+                ct.target = amt
+                #ct.subtarget = amt.data.edit_bones.get(parent_bone_name)
+                #ct.subtarget = amt.data.bones.get(parent_bone_name)
+                #ct.inverse_matrix = amt.data.bones.get(parent_bone_name).matrix_world.inverted()
+                ct.subtarget = parent_bone_name
+                #obj.active = True
+                ct.inverse_matrix = (bpy.data.objects['Armature'].matrix_world * amt.data.edit_bones.get(parent_bone_name).matrix).inverted()
+                ###ctx = bpy.context.copy()
+                ###ctx['constraint'] = ct
+                ###print(ctx.keys())
+                #ctx.active_object = obj
+                #bpy.context.scene.objects.active
+                ##ct_obj = bpy.context.scene.objects.active
+                ##bpy.context.scene.objects.active = obj
+                #ctx.scene.objects.active = obj
+                ##bpy.ops.constraint.childof_set_inverse(ctx, constraint="Child Of", owner='OBJECT')
+                ##bpy.context.scene.objects.active = ct_obj
+        for c in obj.children:
+            self.child_to_bones(amt, c)
+
     def execute(self, context):
         #bpy.ops.object.add(type='ARMATURE', enter_editmode=True, location=context.scene.objects['cutscenedummy'].location)
         bpy.ops.object.armature_add()
         ob = bpy.context.scene.objects.active
         ob.show_x_ray = True
-        ob.name = 'Armature'
+        # Make this modelname_amt
+        amt_name = 'Armature'
+        ob.name = amt_name
         ob.show_axis = True
+        ob.parent = context.scene.objects['cutscenedummy']
         ob.location = context.scene.objects['cutscenedummy'].location
         #context.scene.objects.active = ob
         print(dir(ob))
@@ -248,8 +438,22 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
         #amt.show_axes = True
         bpy.ops.object.mode_set(mode='EDIT')
         amt.edit_bones[0].tail = context.scene.objects['rootdummy'].location
+        #self.boner(amt, context.scene.objects['rootdummy'], pbone=amt.edit_bones[0])
         self.boner(amt, context.scene.objects['rootdummy'], pbone=amt.edit_bones[0])
+        self.adjust_control_handles(amt, amt.edit_bones[0])
+        self.flatten_old_pseudobones(ob, context.scene.objects['PSB_rootdummy'])
+        self.child_to_bones(ob, context.scene.objects['cutscenedummy'])
         bpy.ops.object.mode_set(mode='OBJECT')
+        # apply armature deformation modifier to skin meshes
+        for name, obj in context.scene.objects.items():
+            if obj.nvb.meshtype == nvb_def.Meshtype.SKIN and \
+               'Armature' not in obj.modifiers:
+                amt_mod = obj.modifiers.new(name='Armature', type='ARMATURE')
+                amt_mod.object = ob
+                amt_mod.use_vertex_groups = True
+                amt_mod.use_deform_preserve_volume = True
+        # apply childOf modifier to non-pseudobone nodes in the cutscenedummy tree
+        ##self.child_to_bones(ob, context.scene.objects['PSB_cutscenedummy'])
         #for name, obj in context.scene.objects.items():
         '''
         while len(obj.children):
@@ -260,6 +464,7 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
                 pass
         '''
         return {'FINISHED'}
+
 
 class NVBTEXTURE_OPS(bpy.types.Operator):
     bl_idname = "nvb.texture_info_ops"
