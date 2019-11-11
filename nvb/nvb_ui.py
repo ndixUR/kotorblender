@@ -225,6 +225,10 @@ class NVB_PANEL_EMPTY(bpy.types.Panel):
                 op.action = 'SING'
                 op = row.operator('nvb.children_smoothgroup', text="Separate")
                 op.action = 'SEPR'
+
+                row = layout.row()
+                row.operator('nvb.armature', text='Make Armature')
+
             else:
                 # MDL Rootdummy in an animation scene
                 row = layout.row()
