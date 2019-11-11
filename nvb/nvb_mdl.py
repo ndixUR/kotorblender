@@ -573,8 +573,9 @@ class Xwk(Mdl):
                     bpy.data.objects.remove(obj)
                 obj = node.addToScene(scene)
                 # Check if such an object exists
-                if node.parentName in bpy.data.objects:
-                    obj.parent                = bpy.data.objects[node.parentName]
+                if node.parentName.lower() in [k.lower() for k in bpy.data.objects.keys()]:
+                    parent_name = nvb_utils.getRealName(node.parentName)
+                    obj.parent = bpy.data.objects[parent_name]
                     obj.matrix_parent_inverse = obj.parent.matrix_world.inverted()
                 else:
                     # Node with invalid parent.
