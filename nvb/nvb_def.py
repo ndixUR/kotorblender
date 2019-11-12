@@ -159,3 +159,16 @@ class Classification():
 
     def __init__():
         pass
+
+
+class Nodetype():
+    DUMMY       = 'dummy'
+    PATCH       = 'patch'
+    REFERENCE   = 'reference'
+    TRIMESH     = 'trimesh'
+    DANGLYMESH  = 'danglymesh'
+    SKIN        = 'skin'
+    EMITTER     = 'emitter'
+    LIGHT       = 'light'
+    AABB        = 'aabb'
+    LIGHTSABER  = 'lightsaber'

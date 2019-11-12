@@ -11,13 +11,16 @@ from . import nvb_animnode
 class Animation():
     """TODO: DOC."""
 
-    def __init__(self, name = 'UNNAMED'):
+    def __init__(self, name = 'UNNAMED', ascii_data=None):
         self.name      = name
         self.length    = 1.0
         self.transtime = 1.0
         self.root      = nvb_def.null
         self.eventList = []
         self.nodeList  = collections.OrderedDict()
+
+        if ascii_data:
+            self.loadAscii(ascii_data)
 
     def getAnimNode(self, nodeName, parentName = nvb_def.null):
         key = parentName + nodeName
@@ -184,6 +187,9 @@ class Animation():
                     blockStart = -1
                 elif (label == 'node'):
                     raise nvb_def.MalformedMdlFile('Unexpected "endnode"')
+
+    def loadAscii(self, ascii_data):
+        return self.getAnimFromAscii([l.strip().split() for l in ascii_data.splitlines()])
 
     def animNodeToAscii(self, bObject, asciiLines):
         node = nvb_animnode.Node()
