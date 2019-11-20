@@ -1131,6 +1131,21 @@ class Animnode():
         for label, (data, data_path, data_dim) in self.object_data.items():
             frames = [fps * d[0] + frame_start for d in data]
             #print(label + ' ' + data_path)
+            use_action = action
+            '''
+            try:
+                getattr(obj, data_path)
+            except:
+                #XXX hack to get lamp data to apply and show up on correct object
+                #XXX no-go because Object has 'color'
+                use_action = nvb_utils.get_action(obj.data, options['mdlname'] + '.' + obj.name)
+            '''
+            if obj.type == 'LAMP' and label in ['radius', 'color']:
+                use_action = nvb_utils.get_action(
+                    # Lamp object, not Object object
+                    obj.data,
+                    options['mdlname'] + '.' + obj.name
+                )
             #XXX temp disable data path here to get conversion
             if label in ['orientation', 'position', 'scale']:
                 data_path = ''
@@ -1141,7 +1156,7 @@ class Animnode():
                 values = [d[1:data_dim+1] for d in data]
                 dp = data_path
                 dp_dim = data_dim
-            Animnode.insert_kfp(frames, values, action, dp, dp_dim)
+            Animnode.insert_kfp(frames, values, use_action, dp, dp_dim)
 
     def create_data_emitter(self, obj, anim, options):
         """Creates animations in emitter actions."""
