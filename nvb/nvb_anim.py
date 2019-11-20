@@ -19,8 +19,56 @@ class Animation():
         self.eventList = []
         self.nodeList  = collections.OrderedDict()
 
+        self.nodes = []
+        self.events = []
+
         if ascii_data:
             self.loadAscii(ascii_data)
+
+
+    @staticmethod
+    def createRestPose(obj, frame=1):
+        """TODO: DOC."""
+        nvb_animnode.Animnode.create_restpose(obj, frame)
+
+
+    def create(self, mdl_base, options={}):
+        """Create animations with a list of imported objects."""
+        # Check for existing animations:
+        #if options.anim_ignore_existing and \
+        #        self.name in mdl_base.nvb.animList.keys():
+        #    return
+        # Add new animation to list
+        #fps = options.scene.render.fps
+        fps = nvb_def.fps
+        new_anim = nvb_utils.create_anim_list_item(mdl_base)
+        new_anim.name = self.name
+        # new_anim.ttime = self.transtime
+        new_anim.transtime = fps * self.transtime
+        # new_anim.root = self.animroot
+        #new_anim.root_obj = noderesolver.get_obj(self.animroot, -1)
+        new_anim.root_obj = nvb_utils.searchNode(
+            mdl_base,
+            lambda o, name=self.animroot: o.name.lower() == name.lower()
+        ).name
+        new_anim.frameEnd = fps * self.length + new_anim.frameStart
+        # events
+        for ev_time, ev_name in self.events:
+            newEvent = new_anim.eventList.add()
+            newEvent.name = ev_name
+            newEvent.frame = fps * ev_time + new_anim.frameStart
+        # Load the animation into the objects/actions
+        for node in self.nodes:
+            obj = nvb_utils.searchNode(
+                mdl_base,
+                lambda o, name=node.name: o.name.lower() == name.lower()
+            )
+            #obj = noderesolver.get_obj(node.name, node.nodeidx)
+            if obj:
+                node.create(obj, new_anim, self.length, {"mdlname":mdl_base.name})
+                #if options.anim_restpose:
+                #    Animation.createRestPose(obj, new_anim.frameStart-5)
+
 
     def getAnimNode(self, nodeName, parentName = nvb_def.null):
         key = parentName + nodeName
@@ -189,7 +237,47 @@ class Animation():
                     raise nvb_def.MalformedMdlFile('Unexpected "endnode"')
 
     def loadAscii(self, ascii_data):
-        return self.getAnimFromAscii([l.strip().split() for l in ascii_data.splitlines()])
+        self.getAnimFromAscii([l.strip().split() for l in ascii_data.splitlines()])
+        """Load an animation from a block from an ascii mdl file."""
+        animNodesStart = ascii_data.find('node ')
+        if (animNodesStart > -1):
+            self.loadAsciiAnimHeader(ascii_data[:animNodesStart-1])
+            self.loadAsciiAnimNodes(ascii_data[animNodesStart:])
+        else:
+            print('Neverblender - WARNING: Failed to load an animation.')
+
+
+    def loadAsciiAnimHeader(self, ascii_data):
+        """TODO: DOC."""
+        ascii_lines = [l.strip().split() for l in ascii_data.splitlines()]
+        for line in ascii_lines:
+            try:
+                label = line[0].lower()
+            except (IndexError, AttributeError):
+                continue  # Probably empty line, skip it
+            if (label == 'newanim'):
+                self.name = nvb_utils.str2identifier(line[1])
+            elif (label == 'length'):
+                self.length = float(line[1])
+            elif (label == 'transtime'):
+                self.transtime = float(line[1])
+            elif (label == 'animroot'):
+                try:
+                    self.animroot = line[1].lower()
+                except (ValueError, IndexError):
+                    self.animroot = ''
+            elif (label == 'event'):
+                self.events.append((float(line[1]), line[2]))
+
+    def loadAsciiAnimNodes(self, ascii_data):
+        """TODO: DOC."""
+        dlm = 'node '
+        node_list = [dlm + s for s in ascii_data.split(dlm) if s != '']
+        for idx, ascii_node in enumerate(node_list):
+            ascii_lines = [l.strip().split() for l in ascii_node.splitlines()]
+            node = nvb_animnode.Animnode()
+            node.load_ascii(ascii_lines, idx)
+            self.nodes.append(node)
 
     def animNodeToAscii(self, bObject, asciiLines):
         node = nvb_animnode.Node()

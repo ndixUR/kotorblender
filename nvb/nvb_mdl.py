@@ -191,6 +191,21 @@ class Mdl():
         for (animName, anim) in self.animDict.items():
             anim.addAnimToScene(scene, rootDummy)
 
+        type(self).create_animations(self.animations, rootDummy)
+
+    @staticmethod
+    def create_animations(animationlist, mdl_base):
+        """TODO: DOC."""
+        # Load the 'default' animation first, so it is at the front
+        anims = [a for a in animationlist if a.name == 'default']
+        for a in anims:
+            a.create(mdl_base)#, options)
+        # Load the rest of the anims
+        anims = [a for a in animationlist if a.name != 'default']
+        for a in anims:
+            a.create(mdl_base)#, options)
+
+
     def loadAscii(self, ascii_block):
         geom_start = ascii_block.find("node ")
         anim_start = ascii_block.find("newanim ")
@@ -219,12 +234,14 @@ class Mdl():
             lambda txt: nvb_anim.Animation(ascii_data=txt),
             animList
         ))
+        for anim in self.animations:
+            self.addAnimation(anim)
 
     #@staticmethod
     def read_ascii_geom(self, ascii_block, nodelist):
         """Load all geometry nodes from an ascii mdl block."""
         delim = "node "
-        print(ascii_block)
+        #print(ascii_block)
         ascii_nodes = [delim + b for b in ascii_block.split(delim) if b]
         for idx, ascii_node in enumerate(ascii_nodes):
             ascii_lines = [l.strip().split() for l in ascii_node.splitlines()]

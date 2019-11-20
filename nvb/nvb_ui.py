@@ -5,6 +5,137 @@ from . import nvb_def
 from . import nvb_utils
 
 
+class KB_UL_anims(bpy.types.UIList):
+    """UI List for displaying animations."""
+
+    def draw_item(self, context, layout, data, item, icon,
+                  active_data, active_propname, index):
+        """Draw a single animation."""
+
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.prop(item, 'name', text='', emboss=False)
+            icn = 'CHECKBOX_DEHLT' if item.mute else 'CHECKBOX_HLT'
+            layout.prop(item, 'mute', text='', icon=icn, emboss=False)
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label('', icon='POSE_DATA')
+
+
+class KB_UL_anim_events(bpy.types.UIList):
+    """UI List for displaying animation events."""
+
+    def draw_item(self, context, layout, data, item, icon,
+                  active_data, active_propname, index):
+        """Draw a single animation event."""
+
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            split = layout.split(0.7, False)
+            split.prop(item, 'name', text='', emboss=False)
+            row = split.row(align=True)
+            row.prop(item, 'frame', text='', emboss=False)
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label('', icon='LAMP')
+
+
+class KB_MT_animlist_specials(bpy.types.Menu):
+    """Animation List Specials."""
+
+    bl_label = "Animation List Specials"
+
+    def draw(self, context):
+        """Draw the panel."""
+        layout = self.layout
+        layout.operator('kb.anim_moveback',
+                        icon='LOOP_FORWARDS')
+        layout.operator('kb.anim_pad',
+                        icon='FULLSCREEN_ENTER')
+        layout.operator('kb.anim_crop',
+                        icon='FULLSCREEN_EXIT')
+        layout.operator('kb.anim_scale',
+                        icon='SORTSIZE')
+        layout.operator('kb.anim_clone',
+                        icon='NODETREE')
+
+
+class NVB_PT_animlist(bpy.types.Panel):
+    """Property panel for animationslist.
+
+    Property panel for additional properties needed for the mdl file
+    format. This is only available for EMPTY objects.
+    It is located under the object data panel in the properties window
+    """
+
+    bl_label = 'Odyssey Animations'
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'object'
+
+    @classmethod
+    def poll(cls, context):
+        """Draw only if part of a valid mdl is selected."""
+        mdl_base = nvb_utils.get_obj_mdl_base(context.object)
+        return mdl_base is not None
+
+    def draw(self, context):
+        """Draw the panel."""
+        layout = self.layout
+        mdl_base = nvb_utils.get_obj_mdl_base(context.object)
+        if mdl_base:
+            # Display and add/remove animations
+            row = layout.row()
+            row.template_list('KB_UL_anims', 'TheAnimList',
+                              mdl_base.nvb, 'animList',
+                              mdl_base.nvb, 'animListIdx',
+                              rows=7)
+            col = row.column(align=True)
+            col.operator('kb.anim_new', icon='ZOOMIN', text='')
+            col.operator('kb.anim_delete', icon='ZOOMOUT', text='')
+            col.separator()
+            col.operator('kb.anim_move',
+                         icon='TRIA_UP', text='').direction = 'UP'
+            col.operator('kb.anim_move',
+                         icon='TRIA_DOWN', text='').direction = 'DOWN'
+            col.separator()
+            col.operator('kb.anim_focus',
+                         icon='RENDER_ANIMATION', text='')
+            col.menu('KB_MT_animlist_specials',
+                     icon='DOWNARROW_HLT', text="")
+            anim_list = mdl_base.nvb.animList
+            anim_list_idx = mdl_base.nvb.animListIdx
+            if anim_list_idx >= 0 and len(anim_list) > anim_list_idx:
+                anim = anim_list[anim_list_idx]
+                row = layout.row()
+                row.prop(anim, 'name')
+                row = layout.row()
+                row.prop(anim, 'root_obj')
+                row = layout.row()
+                row.prop(anim, 'transtime')
+                row = layout.row()
+                split = row.split()
+                col = split.column(align=True)
+                col.prop(anim, 'frameStart')
+                col.prop(anim, 'frameEnd')
+
+                # Event Helper. Display and add/remove events.
+                box = layout.box()
+                box.label(text='Events')
+
+                row = box.row()
+                row.template_list('KB_UL_anim_events', 'TheEventList',
+                                  anim, 'eventList',
+                                  anim, 'eventListIdx')
+                col = row.column(align=True)
+                col.operator('kb.anim_event_new', text='', icon='ZOOMIN')
+                col.operator('kb.anim_event_delete', text='', icon='ZOOMOUT')
+                col.separator()
+                col.operator('kb.anim_event_move',
+                             icon='TRIA_UP', text='').direction = 'UP'
+                col.operator('kb.anim_event_move',
+                             icon='TRIA_DOWN', text='').direction = 'DOWN'
+            layout.separator()
+
+
 class NVB_UILIST_SMOOTHGROUPS(bpy.types.Panel):
     bl_label = "Smoothgroups"
     bl_space_type = "VIEW_3D"

@@ -8,6 +8,10 @@ from . import nvb_utils
 from . import nvb_txi
 
 
+def KB_anim_root_obj_poll(self, object):
+    return nvb_utils.ancestorNode(object, nvb_utils.isRootDummy) is not None
+
+
 def nvb_update_shadow_prop(self, context):
     '''
     Set the lamps shadow to match the aurora shadow property
@@ -225,6 +229,54 @@ def nvb_update_emitter_prop(self, context):
     elif obj.nvb.p2p_type == 'Gravity':
         obj.nvb.p2p_sel = 0
 
+
+class KB_PG_animevent(bpy.types.PropertyGroup):
+    """Properties for a single event in the even list."""
+
+    name = bpy.props.StringProperty(name='Name', default='unnamed',
+                                    description='Name for this event',
+                                    options=set())
+    frame = bpy.props.IntProperty(
+        name='Frame', default=1,
+        description='Frame at which the event should fire',
+        options=set())
+
+
+class KB_PG_anim(bpy.types.PropertyGroup):
+    """Properties for a single animation in the animation list."""
+
+    name = bpy.props.StringProperty(name='Name',
+                                    description='Name of this animation',
+                                    default='unnamed', options=set())
+    ttime = bpy.props.FloatProperty(
+        name='Transitiontime', subtype='TIME', options=set(),
+        description='Blending time between animations in seconds',
+        default=0.25, min=0.0, soft_max=60.0)
+    transtime = bpy.props.FloatProperty(
+        name='Transitiontime', subtype='TIME', options=set(),
+        description='Blending time between animations in frames',
+        default=7.5, min=0.0, soft_max=60.0)
+    root = bpy.props.StringProperty(name='Root', default='', options=set(),
+                                    description='Entry point of the animation')
+    # Blender 2.79+ method:
+    #root_obj = bpy.props.PointerProperty(
+    #    name='Root', description='Entry point of the animation',
+    #    type=bpy.types.Object, options=set())#, poll=KB_anim_root_obj_poll)
+    root_obj = bpy.props.StringProperty(
+        name='Root', description='Entry point of the animation',
+        default='unnamed', options=set())
+    mute = bpy.props.BoolProperty(name='Export', default=False, options=set(),
+                                  description='Export animation to MDL')
+    frameStart = bpy.props.IntProperty(name='Start', default=0, options=set(),
+                                       description='Animation Start', min=0)
+    frameEnd = bpy.props.IntProperty(name='End', default=0, options=set(),
+                                     description='Animation End', min=0)
+
+    eventList = bpy.props.CollectionProperty(type=KB_PG_animevent)
+    eventListIdx = bpy.props.IntProperty(name='Index for event List',
+                                         default=0, options=set())
+
+
 class KB_PG_OBJECT(bpy.types.PropertyGroup):
     '''
     This class defines all additional properties needed by the mdl file
@@ -283,6 +335,10 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
                                             default = 'NONE')
     animscale   = bpy.props.FloatProperty(name = 'Animationscale', description = 'Animation scale for all animations', default = 1.00, min = 0.0)
     isanimation = bpy.props.BoolProperty(name = 'Animation', description = 'Whether this dummy and it\'s children are in an animation scene', default = False)
+    # Animation Data (for separation)
+    animList = bpy.props.CollectionProperty(type=KB_PG_anim)
+    animListIdx = bpy.props.IntProperty(name='Index for anim List',
+                                        default=0, options=set())
     # For MDL Rootdummies in animations
     animname     = bpy.props.StringProperty(name = 'Animation name', description = 'Name of the animation', default = '')
     newanimname  = bpy.props.StringProperty(name = 'New name', description = 'Name of the new animation', default = '')
