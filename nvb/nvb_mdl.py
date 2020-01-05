@@ -28,6 +28,8 @@ class Mdl():
         self.compress_quats = False
         self.headlink       = False
 
+        self.animations = []
+
         self.mdlnodes = []
 
 
