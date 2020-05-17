@@ -11,15 +11,16 @@ from datetime import datetime
 tokens = [
     "proceduretype",
     "filter",
-    "filerange",
+    "filerange",                # not in vanilla corpus
     "defaultwidth",
     "defaultheight",
     "downsamplemax",
     "downsamplemin",
     "mipmap",
-    "maptexelstopixels",
-    "gamma",
+    "maptexelstopixels",        # not in vanilla corpus
+    "gamma",                    # not in vanilla corpus
     "isbumpmap",
+    "blending",
     "clamp",
     "alphamean",
     "isdiffusebumpmap",
@@ -28,32 +29,33 @@ tokens = [
     "specularcolor",
     "islightmap",
     "compresstexture",
+    "fps",
     "numx",
     "numy",
     "cube",
     "bumpintensity",
-    "temporary",
-    "useglobalalpha",
+    "temporary",                # not in vanilla corpus
+    "useglobalalpha",           # not in vanilla corpus
     "isenvironmentmapped",
     "envmapalpha",
-    "diffusebumpintensity",
-    "specularbumpintensity",
+    "diffusebumpintensity",     # not in vanilla corpus
+    "specularbumpintensity",    # not in vanilla corpus
     "bumpmaptexture",
     "bumpyshinytexture",
     "envmaptexture",
     "decal",
-    "renderbmlmtype",
+    "renderbmlmtype",           # not in vanilla corpus
     "wateralpha",
     "arturowidth",
     "arturoheight",
-    "forcecyclespeed",
-    "anglecyclespeed",
+    "forcecyclespeed",          # not in vanilla corpus
+    "anglecyclespeed",          # not in vanilla corpus
     "waterwidth",
     "waterheight",
     "channelscale",
     "channeltranslate",
     "distort",
-    "distortangle",
+    "distortangle",             # not in vanilla corpus
     "distortionamplitude",
     "speed",
     "channelscale0",
@@ -68,6 +70,8 @@ tokens = [
     "fontheight",
     "baselineheight",
     "texturewidth",
+    "upperleftcoords",
+    "lowerrightcoords",
     "spacingR",
     "spacingB"
 ]
@@ -84,9 +88,8 @@ bool_tokens = [
     "useglobalalpha",
     "isenvironmentmapped",
     "decal",
+    "filter",
     "renderbmlmtype",
-    "arturowidth",
-    "arturoheight",
     "waterwidth",
     "waterheight",
     "distort",
@@ -98,20 +101,18 @@ int_tokens = [
     "defaultheight",
     "downsamplemax",
     "downsamplemin",
-    "mipmap",
     "maptexelstopixels",
-    "gamma",
-    "isbumpmap",
     "clamp",
-    "alphamean",
-    "isdiffusebumpmap",
-    "isspecularbumpmap",
-    "bumpmapscaling",
-    "specularcolor",
+    "fps",
     "numx",
     "numy",
+    "arturowidth",
+    "arturoheight",
     "channelscale",
     "channeltranslate",
+    "numchars",
+    "upperleftcoords",
+    "lowerrightcoords",
 ]
 float_tokens = [
     "gamma",
@@ -121,9 +122,9 @@ float_tokens = [
     "envmapalpha",
     "diffusebumpintensity",
     "specularbumpintensity",
+    "specularcolor",
     "wateralpha",
     "forcecyclespeed",
-    "anglecyclespeed",
     "distortionamplitude",
     "speed",
     "channelscale0",
@@ -161,16 +162,8 @@ def loadTxi(imagetexture, operator=None):
         try:
             if line[0] in tokens:
                 value = line[1]
-                if line[0] in bool_tokens:
-                    if value == 'TRUE' or value == 'true' or int(value) >= 1:
-                        value = True
-                    else:
-                        value = False
-                elif line[0] in int_tokens:
-                    value = int(value)
-                elif line[0] in float_tokens:
-                    value = float(value)
-                elif line[0] == 'specularcolor':
+                # special types
+                if line[0] == 'specularcolor':
                     value = (line[1], line[2], line[3])
                 elif line[0] == 'channelscale':
                     for scale_counter in range(0,int(line[1])):
@@ -182,6 +175,16 @@ def loadTxi(imagetexture, operator=None):
                         setattr(imagetexture.nvb,
                                 'channeltranslate' + str(scale_counter),
                                 asciiLines[line_idx + 1 + scale_counter][0])
+                # the generalized types
+                elif line[0] in bool_tokens:
+                    if value == 'TRUE' or value == 'true' or int(value) >= 1:
+                        value = True
+                    else:
+                        value = False
+                elif line[0] in int_tokens:
+                    value = int(value)
+                elif line[0] in float_tokens:
+                    value = float(value)
                 setattr(imagetexture.nvb, line[0], value)
                 print(line[0])
                 print(getattr(imagetexture.nvb, line[0]))
@@ -217,7 +220,7 @@ def saveTxi(imagetexture, operator=None):
     export_names = []
 
     asciiLines = []
-    asciiLines.append('# Exported from blender at ' + datetime.now().strftime('%A, %Y-%m-%d'))
+    asciiLines.append('# Exported from blender ' + datetime.now().strftime('%A, %Y-%m-%d'))
     # filter modified to unique, reduce channel{scale,translate}
     for idx, propname in enumerate(imagetexture.nvb.modified_properties):
         propname = propname.name
