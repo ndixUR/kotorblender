@@ -47,16 +47,16 @@ class Animation():
         new_anim.transtime = fps * self.transtime
         # new_anim.root = self.animroot
         #new_anim.root_obj = noderesolver.get_obj(self.animroot, -1)
-        new_anim.root_obj = nvb_utils.searchNode(
+        new_anim.root = new_anim.root_obj = nvb_utils.searchNode(
             mdl_base,
             lambda o, name=self.animroot: o.name.lower() == name.lower()
         ).name
-        new_anim.frameEnd = fps * self.length + new_anim.frameStart
+        new_anim.frameEnd = nvb_utils.nwtime2frame(self.length) + new_anim.frameStart
         # events
         for ev_time, ev_name in self.events:
             newEvent = new_anim.eventList.add()
             newEvent.name = ev_name
-            newEvent.frame = fps * ev_time + new_anim.frameStart
+            newEvent.frame = nvb_utils.nwtime2frame(ev_time) + new_anim.frameStart
         # Load the animation into the objects/actions
         for node in self.nodes:
             obj = nvb_utils.searchNode(
@@ -66,8 +66,8 @@ class Animation():
             #obj = noderesolver.get_obj(node.name, node.nodeidx)
             if obj:
                 node.create(obj, new_anim, self.length, {"mdlname":mdl_base.name})
-                #if options.anim_restpose:
-                #    Animation.createRestPose(obj, new_anim.frameStart-5)
+                if options.get("anim_restpose"):
+                    Animation.createRestPose(obj, new_anim.frameStart-5)
 
 
     def getAnimNode(self, nodeName, parentName = nvb_def.null):
@@ -90,109 +90,6 @@ class Animation():
     def addEvent(self, event):
         self.eventList.append(event)
 
-    def addAnimToScene(self, scene, rootDummy):
-        # Create a new scene
-        # Check if there is already a scene with this animation name
-        animScene = None
-        if (self.name not in bpy.data.scenes.keys()):
-            animScene = bpy.data.scenes.new(self.name)
-        else:
-            animScene = bpy.data.scenes[self.name]
-        animScene.render.fps    = nvb_def.fps
-        animScene.frame_start   = 0
-        animScene.frame_end     = nvb_utils.nwtime2frame(self.length)
-        animScene.frame_current = 0
-
-        if not rootDummy:
-            return  # Nope
-
-        # Copy objects to the new scene:
-        self.copyObjectToScene(animScene, rootDummy, None)
-
-    def copyObjectToScene(self, scene, theOriginal, parent):
-        '''
-        Copy object and all it's children to scene.
-        For object with simple (position, rotation) or no animations we
-        create a linked copy.
-        For alpha animation we'll need to copy the data too.
-        '''
-        theCopy        = theOriginal.copy()
-        theCopy.parent = parent
-        theCopy.name   = theOriginal.name + '.' + self.name
-        theCopy.nvb.rawascii  = ''
-
-        # rootDummy ?
-        objType = theOriginal.type
-        if (objType == 'EMPTY') and \
-           (theOriginal.nvb.dummytype == nvb_def.Dummytype.MDLROOT):
-            # We copied the root dummy, set some stuff
-            theCopy.nvb.isanimation = True
-            theCopy.nvb.animname    = self.name
-            theCopy.nvb.transtime   = self.transtime
-            theCopy.nvb.animroot    = self.root
-            self.addEventsToObject(theCopy)
-
-        # Add animations from the animation node to the newly created object
-        if theOriginal.parent:
-            animNode = self.getAnimNode(theOriginal.name, theOriginal.parent.name)
-        else:
-            animNode = self.getAnimNode(theOriginal.name)
-        if animNode:
-            deepCopy = False
-            if deepCopy:
-                # Always copy all data & materials.
-                # Each animation has it's own data.
-                if theOriginal.data:
-                    data      = theOriginal.data.copy()
-                    data.name = theOriginal.name + '.' + self.name
-                    theCopy.data = data
-                    # Create a copy of the material
-                    if (theOriginal.active_material):
-                        material      = theOriginal.active_material.copy()
-                        material.name = theOriginal.active_material.name + '.' + self.name
-                        theCopy.active_material = material
-            else:
-                # Create only a single copy of data and materials which is
-                # shared between animations.
-                # Create an extra copy only on a on-demand basis, i.e. if there
-                # are animations attached which need it.
-                animDataName = nvb_def.animdataPrefix + theOriginal.name
-                if (objType == 'LAMP'):
-                    if animDataName in bpy.data.lamps:
-                        data = bpy.data.lamps[animDataName]
-                    else:
-                        data      = theOriginal.data.copy()
-                        data.name = animDataName
-                    theCopy.data = data
-                elif (objType == 'MESH'):
-                    if animNode is not None and animNode.requiresUniqueData():
-                        # We need to copy the material and therefore the data block
-                        data         = theOriginal.data.copy()
-                        data.name    = theOriginal.name + '.' + self.name
-                        theCopy.data = data
-                        if (theOriginal.active_material):
-                            # Copy the material
-                            material      = theOriginal.active_material.copy()
-                            material.name = theOriginal.active_material.name + '.' + self.name
-                            theCopy.active_material = material
-                            # No need to copy the textures, as the texture settings
-                            # belong to the material texture slot, not the
-                            # texture itself
-                    else:
-                        if animDataName in bpy.data.meshes:
-                            data = bpy.data.meshes[animDataName]
-                        else:
-                            data      = theOriginal.data.copy()
-                            data.name = animDataName
-                        theCopy.data = data
-            animNode.addAnimToObject(theCopy, self.name)
-
-        # Link copy to the anim scene
-        scene.objects.link(theCopy)
-
-        # Convert all child objects too
-        for child in theOriginal.children:
-            self.copyObjectToScene(scene, child, theCopy)
 
     def addEventsToObject(self, rootDummy):
         for event in self.eventList:
@@ -298,6 +195,48 @@ class Animation():
 
         for (imporder, child) in childList:
             self.animNodeToAscii(child, asciiLines)
+
+
+    @staticmethod
+    def generateAsciiNodes(obj, anim, ascii_lines, options):
+        """TODO: Doc."""
+        nvb_animnode.Animnode.generate_ascii(obj, anim, ascii_lines, options)
+
+        # Sort children to restore original order before import
+        # (important for supermodels/animations to work)
+        children = [c for c in obj.children]
+        children.sort(key=lambda c: c.name)
+        children.sort(key=lambda c: c.nvb.imporder)
+        for c in children:
+            Animation.generateAsciiNodes(c, anim, ascii_lines, options)
+
+
+    @staticmethod
+    def generateAscii(animRootDummy, anim, ascii_lines, options):
+        fps = nvb_def.fps
+        ascii_lines.append("newanim {} {}".format(anim.name, animRootDummy.name))
+        ascii_lines.append(
+            "  length {}".format(
+                round((anim.frameEnd - anim.frameStart)/fps, 5)
+            )
+        )
+        ascii_lines.append(
+            "  transtime {}".format(round(anim.ttime, 3))
+        )
+        ascii_lines.append(
+            "  animroot {}".format(anim.root)
+        )
+        # Get animation events
+        for event in anim.eventList:
+            event_time = (event.frame - anim.frameStart) / fps
+            ascii_lines.append(
+                "  event {} {}".format(round(event_time, 3), event.name)
+            )
+
+        Animation.generateAsciiNodes(animRootDummy, anim, ascii_lines, options)
+
+        ascii_lines.append("doneanim {} {}".format(anim.name, animRootDummy.name))
+        ascii_lines.append("")
 
     def toAscii(self, animScene, animRootDummy, asciiLines, mdlName = ''):
         self.name      = animRootDummy.nvb.animname

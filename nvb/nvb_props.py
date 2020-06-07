@@ -290,6 +290,17 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
                                               default = (1.0, 1.0, 1.0),
                                               min = 0.0, max = 1.0,
                                               soft_min = 0.0, soft_max = 1.0)
+
+    # Helper properties to store additional values. Cannot be edited.
+    restrot = bpy.props.FloatVectorProperty(name='Rest Pose Rotation',
+                                            size=4,
+                                            default=(0.0, 0.0, 0.0, 0.0),
+                                            options=set())
+    restloc = bpy.props.FloatVectorProperty(name='Rest Pose Location',
+                                            size=3,
+                                            default=(0.0, 0.0, 0.0),
+                                            options=set())
+
     imporder = bpy.props.IntProperty(name = "Order of Import", default = 0)
 
     # For all emptys

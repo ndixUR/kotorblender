@@ -190,22 +190,22 @@ class Mdl():
             if not rootDummy:
                 return
 
-        for (animName, anim) in self.animDict.items():
-            anim.addAnimToScene(scene, rootDummy)
-
         type(self).create_animations(self.animations, rootDummy)
 
     @staticmethod
     def create_animations(animationlist, mdl_base):
         """TODO: DOC."""
+        options = {
+            "anim_restpose": 1
+        }
         # Load the 'default' animation first, so it is at the front
         anims = [a for a in animationlist if a.name == 'default']
         for a in anims:
-            a.create(mdl_base)#, options)
+            a.create(mdl_base, options)
         # Load the rest of the anims
         anims = [a for a in animationlist if a.name != 'default']
         for a in anims:
-            a.create(mdl_base)#, options)
+            a.create(mdl_base, options)
 
 
     def loadAscii(self, ascii_block):
@@ -359,14 +359,14 @@ class Mdl():
         for (imporder, child) in childList:
             self.geometryToAscii(child, asciiLines, simple, nameDict=nameDict)
 
-    def animationsToAscii(self, asciiLines):
-        for scene in bpy.data.scenes:
-            animRootDummy = nvb_utils.getAnimationRootdummy(scene)
-            if animRootDummy:
-                # Check the name of the roodummy
-                # if animRootDummy.name.rfind(self.validExports[0]):
-                anim = nvb_anim.Animation()
-                anim.toAscii(scene, animRootDummy, asciiLines, self.name)
+
+    def generateAsciiAnimations(self, ascii_lines, rootDummy, options={}):
+        if rootDummy.nvb.animList:
+            for anim in rootDummy.nvb.animList:
+                print('export animation ' + anim.name)
+                nvb_anim.Animation.generateAscii(rootDummy, anim,
+                                                 ascii_lines, options)
+
 
     def generateAscii(self, asciiLines, rootDummy, exports = {'ANIMATION', 'WALKMESH'}):
         self.name           = rootDummy.name
@@ -458,7 +458,7 @@ class Mdl():
         if 'ANIMATION' in exports:
             asciiLines.append('')
             asciiLines.append('# ANIM ASCII')
-            self.animationsToAscii(asciiLines)
+            self.generateAsciiAnimations(asciiLines, rootDummy)
         # The End
         asciiLines.append('donemodel ' + self.name)
         asciiLines.append('')

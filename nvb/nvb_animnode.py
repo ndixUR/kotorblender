@@ -595,88 +595,112 @@ class Node():
         targetObject.animation_data.action = action
 
 
-    def getKeysFromAction(self, action, keyDict):
-            for fcurve in action.fcurves:
-                # Get the sub dict for this particlar type of fcurve
-                axis     = fcurve.array_index
-                dataPath = fcurve.data_path
-                name     = ''
-                #print(dataPath)
-                # handle material property alpha separately
-                if dataPath.endswith('alpha_factor') or \
-                   dataPath.endswith('alpha'):
-                    name = 'alphakey'
-                    ktype = self.KEY_TYPE['alpha']
-                for keyname in self.KEY_TYPE.keys():
-                    ktype = self.KEY_TYPE[keyname]
-                    if ktype['objdata'] is not None and \
-                       dataPath == ktype['objdata']:
-                        name = keyname + 'key'
-                        break
-                for keyname in self.EMITTER_KEY_TYPE.keys():
-                    if dataPath == 'nvb.' + keyname.lower():
-                        ktype = self.EMITTER_KEY_TYPE[keyname]
-                        name = keyname + 'key'
-                        break
+    @staticmethod
+    def getKeysFromAction(anim, action, keyDict):
+        for fcurve in action.fcurves:
+            # Get the sub dict for this particlar type of fcurve
+            axis     = fcurve.array_index
+            dataPath = fcurve.data_path
+            name     = ''
+            #print(dataPath)
+            # handle material property alpha separately
+            if dataPath.endswith('alpha_factor') or \
+               dataPath.endswith('alpha'):
+                name = 'alphakey'
+                ktype = Node.KEY_TYPE['alpha']
+            for keyname in Node.KEY_TYPE.keys():
+                ktype = Node.KEY_TYPE[keyname]
+                if ktype['objdata'] is not None and \
+                   dataPath == ktype['objdata']:
+                    name = keyname + 'key'
+                    break
+            for keyname in Node.EMITTER_KEY_TYPE.keys():
+                if dataPath == 'nvb.' + keyname.lower():
+                    ktype = Node.EMITTER_KEY_TYPE[keyname]
+                    name = keyname + 'key'
+                    break
 
-                for kfp in fcurve.keyframe_points:
-                    if name.startswith('orientation'):
-                        # bezier keyed orientation animation currently unsupported
-                        break
+            # does this fcurve have points in this animation?
+            # if not, skip it
+            if not len([
+                kfp for kfp in fcurve.keyframe_points \
+                if kfp.co[0] >= anim.frameStart and kfp.co[0] <= anim.frameEnd
+            ]):
+                continue
+
+            for kfp in fcurve.keyframe_points:
+                if name.startswith('orientation'):
+                    # bezier keyed orientation animation currently unsupported
+                    break
+                if kfp.interpolation == 'BEZIER':
+                    name = re.sub(r'^(.+)key$', r'\1bezierkey', name)
+                    break
+
+            for kfkey, kfp in enumerate(fcurve.keyframe_points):
+                #frame = int(round(kfp.co[0])) - anim.frameStart
+                frame = int(round(kfp.co[0]))
+                if frame < anim.frameStart or frame > anim.frameEnd:
+                    continue
+                if name not in keyDict:
+                    keyDict[name] = collections.OrderedDict()
+                keys  = keyDict[name]
+                if frame in keys:
+                    values = keys[frame]
+                else:
+                    values = [0.0, 0.0, 0.0, 0.0]
+                values[axis] = values[axis] + kfp.co[1]
+                #print(values)
+                if name.endswith('bezierkey'):
                     if kfp.interpolation == 'BEZIER':
-                        name = re.sub(r'^(.+)key$', r'\1bezierkey', name)
-                        break
-
-                for kfkey, kfp in enumerate(fcurve.keyframe_points):
-                    frame = int(round(kfp.co[0]))
-                    if name not in keyDict:
-                        keyDict[name] = collections.OrderedDict()
-                    keys  = keyDict[name]
-                    if frame in keys:
-                        values = keys[frame]
-                    else:
-                        values = [0.0, 0.0, 0.0, 0.0]
-                    values[axis] = values[axis] + kfp.co[1]
-                    #print(values)
-                    if name.endswith('bezierkey'):
-                        if kfp.interpolation == 'BEZIER':
-                            values[ktype['axes'] + (axis * 2):(ktype['axes'] + 1) + (axis * 2)] = \
-                                [ kfp.handle_left[1] - kfp.co[1], kfp.handle_right[1] - kfp.co[1] ]
-                        elif kfp.interpolation == 'LINEAR':
-                            # do the linear emulation,
-                            # distance between keyframes / 3 point on linear interpolation @ frame
-                            # y = y0 + ((x - x0) * ((y1 - y0)/(x1 - x0)))
-                            # right handle is on the segment controlled by this keyframe
-                            if kfkey < len(fcurve.keyframe_points) - 1:
-                                next_kfp = fcurve.keyframe_points[kfkey + 1]
-                                next_frame = int(round((next_kfp.co[0] - kfp.co[0]) / 3.0))
-                                right_handle = kfp.co[1] + ((next_frame - frame) * ((next_kfp.co[1] - kfp.co[1]) / (next_kfp.co[0] - kfp.co[0])))
-                                # make exported right handle value relative to keyframe value:
-                                right_handle = right_handle - kfp.co[1]
-                            else:
-                                right_handle = 0.0
-                            # left handle is on the segment controlled by the previous keyframe
-                            if kfkey > 0 and fcurve.keyframe_points[kfkey - 1].interpolation == 'LINEAR':
-                                prev_kfp = fcurve.keyframe_points[kfkey - 1]
-                                prev_frame = int(round((kfp.co[0] - prev_kfp.co[0]) / 3.0))
-                                left_handle = prev_kfp.co[1] + ((prev_frame - prev_kfp.co[0]) * ((kfp.co[1] - prev_kfp.co[1]) / (kfp.co[0] - prev_kfp.co[0])))
-                                # make exported left handle value relative to keyframe value:
-                                left_handle = left_handle - kfp.co[1]
-                            elif kfkey > 0 and kfp.handle_left and kfp.handle_left[1]:
-                                left_handle = kfp.handle_left[1] - kfp.co[1]
-                            else:
-                                left_handle = 0.0
-                            values[ktype['axes'] + (axis * 2):(ktype['axes'] + 1) + (axis * 2)] = \
-                                [ left_handle, right_handle ]
+                        values[ktype['axes'] + (axis * 2):(ktype['axes'] + 1) + (axis * 2)] = \
+                            [ kfp.handle_left[1] - kfp.co[1], kfp.handle_right[1] - kfp.co[1] ]
+                    elif kfp.interpolation == 'LINEAR':
+                        # do the linear emulation,
+                        # distance between keyframes / 3 point on linear interpolation @ frame
+                        # y = y0 + ((x - x0) * ((y1 - y0)/(x1 - x0)))
+                        # right handle is on the segment controlled by this keyframe
+                        if kfkey < len(fcurve.keyframe_points) - 1:
+                            next_kfp = fcurve.keyframe_points[kfkey + 1]
+                            next_frame = int(round((next_kfp.co[0] - kfp.co[0]) / 3.0))
+                            right_handle = kfp.co[1] + (
+                                (next_frame - frame) * (
+                                    (next_kfp.co[1] - kfp.co[1]) / (next_kfp.co[0] - kfp.co[0])
+                                )
+                            )
+                            # make exported right handle value relative to keyframe value:
+                            right_handle = right_handle - kfp.co[1]
                         else:
-                            # somebody mixed an unknown keyframe type ...
-                            # give them some bad data
-                            values[ktype['axes'] + (axis * 2):(ktype['axes'] + 1) + (axis * 2)] = [ 0.0, 0.0 ]
-                            #values.extend([ 0.0, 0.0 ])
-                    keys[frame] = values
+                            right_handle = 0.0
+                        # left handle is on the segment controlled by the previous keyframe
+                        if kfkey > 0 and fcurve.keyframe_points[kfkey - 1].interpolation == 'LINEAR':
+                            prev_kfp = fcurve.keyframe_points[kfkey - 1]
+                            prev_frame = int(round((kfp.co[0] - prev_kfp.co[0]) / 3.0))
+                            left_handle = prev_kfp.co[1] + (
+                                (prev_frame - prev_kfp.co[0]) * (
+                                    (kfp.co[1] - prev_kfp.co[1]) / (kfp.co[0] - prev_kfp.co[0])
+                                )
+                            )
+                            # make exported left handle value relative to keyframe value:
+                            left_handle = left_handle - kfp.co[1]
+                        elif kfkey > 0 and kfp.handle_left and kfp.handle_left[1]:
+                            left_handle = kfp.handle_left[1] - kfp.co[1]
+                        else:
+                            left_handle = 0.0
+                        values[ktype['axes'] + (axis * 2):(ktype['axes'] + 1) + (axis * 2)] = \
+                            [ left_handle, right_handle ]
+                    else:
+                        # somebody mixed an unknown keyframe type ...
+                        # give them some bad data
+                        values[ktype['axes'] + (axis * 2):(ktype['axes'] + 1) + (axis * 2)] = [ 0.0, 0.0 ]
+                        #values.extend([ 0.0, 0.0 ])
+                keys[frame] = values
 
 
     def addKeysToAsciiIncompat(self, obj, asciiLines):
+        return Node.generate_ascii_keys_incompat(obj, asciiLines)
+
+    @staticmethod
+    def generate_ascii_keys_incompat(obj, asciiLines, options={}):
         #if obj.nvb.meshtype != nvb_def.Meshtype.EMITTER:
         #    return
         if obj.nvb.rawascii not in bpy.data.texts:
@@ -702,37 +726,39 @@ class Node():
                         asciiLines.append('    ' + ' '.join(line))
 
 
-    def addKeysToAscii(self, animObj, originalObj, asciiLines):
+    @staticmethod
+    def generate_ascii_keys(animObj, anim, asciiLines, options={}):
         keyDict = {}
 
         # Object Data
         if animObj.animation_data:
             action = animObj.animation_data.action
             if action:
-                self.getKeysFromAction(action, keyDict)
+                Node.getKeysFromAction(anim, action, keyDict)
 
         # Material/ texture data (= texture alpha_factor)
         if animObj.active_material and animObj.active_material.animation_data:
             action = animObj.active_material.animation_data.action
             if action:
-                self.getKeysFromAction(action, keyDict)
+                Node.getKeysFromAction(anim, action, keyDict)
 
         l_str   = str
         l_round = round
 
-        for attrname in self.KEY_TYPE.keys():
+        for attrname in Node.KEY_TYPE.keys():
             bezname = attrname + 'bezierkey'
             keyname = attrname + 'key'
             if (bezname not in keyDict or not len(keyDict[bezname])) and \
                (keyname not in keyDict or not len(keyDict[keyname])):
                 continue
-            ktype = self.KEY_TYPE[attrname]
+            ktype = Node.KEY_TYPE[attrname]
             # using a bezierkey
             if bezname in keyDict and len(keyDict[bezname]):
                 keyname = bezname
             asciiLines.append('    {} {}'.format(keyname, l_str(len(keyDict[keyname]))))
             for frame, key in keyDict[keyname].items():
-                time = l_round(nvb_utils.frame2nwtime(frame), 5)
+                # convert raw frame number to animation-relative time
+                time = l_round(nvb_utils.frame2nwtime(frame - anim.frameStart), 5)
                 # orientation value conversion
                 if keyname.startswith('orientation'):
                     key = nvb_utils.euler2nwangle(mathutils.Euler((key[0:3]), 'XYZ'))
@@ -746,19 +772,20 @@ class Node():
                     # right control point(s)
                     s += (' {: .7g}' * ktype['values']).format(*key[ktype['axes'] + 1::2])
                 asciiLines.append(s)
-        for attrname in self.EMITTER_KEY_TYPE.keys():
+        for attrname in Node.EMITTER_KEY_TYPE.keys():
             bezname = attrname + 'bezierkey'
             keyname = attrname + 'key'
             if (bezname not in keyDict or not len(keyDict[bezname])) and \
                (keyname not in keyDict or not len(keyDict[keyname])):
                 continue
-            ktype = self.EMITTER_KEY_TYPE[attrname]
+            ktype = Node.EMITTER_KEY_TYPE[attrname]
             # using a bezierkey
             if bezname in keyDict and len(keyDict[bezname]):
                 keyname = bezname
             asciiLines.append('    {} {}'.format(keyname, l_str(len(keyDict[keyname]))))
             for frame, key in keyDict[keyname].items():
-                time = l_round(nvb_utils.frame2nwtime(frame), 5)
+                # convert raw frame number to animation-relative time
+                time = l_round(nvb_utils.frame2nwtime(frame - anim.frameStart), 5)
                 # orientation value conversion
                 # export title and
                 value_str = " {: .7g}"
@@ -781,7 +808,8 @@ class Node():
                 asciiLines.append(s)
 
 
-    def getOriginalName(self, nodeName, animName):
+    @staticmethod
+    def getOriginalName(nodeName, animName):
         '''
         A bit messy due to compatibility concerns
         '''
@@ -801,7 +829,8 @@ class Node():
         # Couldn't find anything ? Return the string itself
         return nodeName
 
-    def exportNeeded(self, animObj):
+    @staticmethod
+    def exportNeeded(animObj, anim):
         '''
         Test whether this node should be included in exported ASCII model
         '''
@@ -812,32 +841,50 @@ class Node():
         if ((animObj.animation_data and \
              animObj.animation_data.action and \
              animObj.animation_data.action.fcurves and \
-             len(animObj.animation_data.action.fcurves) > 0) or \
+             len(animObj.animation_data.action.fcurves) > 0 and \
+             len(list(filter(
+                lambda fc: len([
+                    kfp for kfp in fc.keyframe_points \
+                    if kfp.co[0] >= anim.frameStart and \
+                    kfp.co[0] <= anim.frameEnd
+                ]),
+                animObj.animation_data.action.fcurves
+             )))) or \
             (animObj.active_material and \
              animObj.active_material.animation_data and \
              animObj.active_material.animation_data.action and \
              animObj.active_material.animation_data.action.fcurves and \
-             len(animObj.active_material.animation_data.action.fcurves) > 0)):
+             len(animObj.active_material.animation_data.action.fcurves) > 0 and \
+             len(list(filter(
+                lambda fc: len([
+                    kfp for kfp in fc.keyframe_points \
+                    if kfp.co[0] >= anim.frameStart and \
+                    kfp.co[0] <= anim.frameEnd
+                ]),
+                animObj.active_material.animation_data.action.fcurves
+             ))))):
+            print('exportNeeded for ' + animObj.name)
             return True
         # if any children of this node will be included, this node must be
         for child in animObj.children:
-            if self.exportNeeded(child):
+            if Node.exportNeeded(child, anim):
+                print('exportNeeded as parent for ' + animObj.name)
                 return True
         # no reason to include this node
         return False
 
     def toAscii(self, animObj, asciiLines, animName):
-        originalName = self.getOriginalName(animObj.name, animName)
+        originalName = Node.getOriginalName(animObj.name, animName)
         originalObj  = bpy.data.objects[originalName]
 
         # test whether this node should be exported,
         # previous behavior was to export all nodes for all animations
-        if not self.exportNeeded(animObj):
+        if not Node.exportNeeded(animObj):
             return
 
         originalParent = nvb_def.null
         if animObj.parent:
-            originalParent = self.getOriginalName(animObj.parent.name, animName)
+            originalParent = Node.getOriginalName(animObj.parent.name, animName)
 
         if originalObj.nvb.meshtype == nvb_def.Meshtype.EMITTER:
             asciiLines.append('  node emitter ' + originalName)
@@ -904,18 +951,53 @@ class Animnode():
     @staticmethod
     def insert_kfp(frames, values, action, dp, dp_dim, action_group=None):
         """TODO: DOC."""
-        if frames and values:
-            fcu = [nvb_utils.get_fcurve(action, dp, i, action_group)
-                   for i in range(dp_dim)]
-            kfp_list = [fcu[i].keyframe_points for i in range(dp_dim)]
-            kfp_cnt = list(map(lambda x: len(x), kfp_list))
-            list(map(lambda x: x.add(len(values)), kfp_list))
-            for i, (frm, val) in enumerate(zip(frames, values)):
-                for d in range(dp_dim):
-                    p = kfp_list[d][kfp_cnt[d]+i]
-                    p.co = frm, val[d]
-                    p.interpolation = 'LINEAR'
-            list(map(lambda c: c.update(), fcu))
+        if not frames or not values:
+            return
+        fcu = [nvb_utils.get_fcurve(action, dp, i, action_group)
+               for i in range(dp_dim)]
+        kfp_list = [fcu[i].keyframe_points for i in range(dp_dim)]
+        kfp_cnt = list(map(lambda x: len(x), kfp_list))
+        list(map(lambda x: x.add(len(values)), kfp_list))
+        for i, (frm, val) in enumerate(zip(frames, values)):
+            #print(
+            #    "{} dim {} v{} f{}".format(dp, dp_dim, len(val), frm)
+            #)
+            for d in range(dp_dim):
+                p = kfp_list[d][kfp_cnt[d]+i]
+                p.co = frm, val[d]
+                p.interpolation = 'LINEAR'
+                # could do len == dp_dim * 3...
+                if len(val) > dp_dim:
+                    p.interpolation = 'BEZIER'
+                    p.handle_left_type = 'FREE'
+                    p.handle_right_type = 'FREE'
+                    # initialize left and right handle x positions
+                    h_left_frame = frm - nvb_def.fps
+                    h_right_frame = frm + nvb_def.fps
+                    # adjust handle x positions based on previous/next keyframes
+                    if i > 0:
+                        p_left = frames[i - 1]
+                        print(" left {} frm {}".format(p_left, frm))
+                        # place 1/3 into the distance from current keyframe
+                        # to previous keyframe
+                        h_left_frame = frm - ((frm - p_left) / 3.0)
+                    if i < len(values) - 1:
+                        p_right = frames[i + 1]
+                        print("right {} frm {}".format(p_right, frm))
+                        # place 1/3 into the distance from current keyframe
+                        # to next keyframe
+                        h_right_frame = frm + ((p_right - frm) / 3.0)
+                    # set bezier handle positions,
+                    # y values are relative, so added to initial value
+                    p.handle_left[:] = [
+                        h_left_frame,
+                        val[d + dp_dim] + val[d]
+                    ]
+                    p.handle_right[:] = [
+                        h_right_frame,
+                        val[d + (2 * dp_dim)] + val[d]
+                    ]
+        list(map(lambda c: c.update(), fcu))
 
     def load_ascii(self, ascii_lines, nodeidx=-1):
         """TODO: DOC."""
@@ -1044,7 +1126,7 @@ class Animnode():
                         break
                 '''
 
-    def create_data_material(self, obj, anim, options):
+    def create_data_material(self, obj, anim, options={}):
         """Creates animations in material actions."""
 
         def data_conversion(label, mat, vals):
@@ -1078,9 +1160,9 @@ class Animnode():
                 dp_dim = data_dim
             Animnode.insert_kfp(frames, values, action, dp, dp_dim)
 
-    def create_data_object(self, obj, anim, options):
+    def create_data_object(self, obj, anim, options={}):
         """Creates animations in object actions."""
-        def data_conversion(label, obj, vals, options):
+        def data_conversion(label, obj, vals, options={}):
             #print("data conversion {}".format(label))
             if label == 'orientation':
                 if obj.rotation_mode == 'AXIS_ANGLE':
@@ -1158,7 +1240,7 @@ class Animnode():
                 dp_dim = data_dim
             Animnode.insert_kfp(frames, values, use_action, dp, dp_dim)
 
-    def create_data_emitter(self, obj, anim, options):
+    def create_data_emitter(self, obj, anim, options={}):
         """Creates animations in emitter actions."""
 
         #part_sys = obj.particle_systems.active
@@ -1189,7 +1271,7 @@ class Animnode():
                 Animnode.insert_kfp(frames, values, action, dp, dp_dim)
             '''
 
-    def create_data_shape(self, obj, anim, animlength, options):
+    def create_data_shape(self, obj, anim, animlength, options={}):
         """Import animated vertices as shapekeys."""
         #fps = options.scene.render.fps
         fps = nvb_def.fps
@@ -1254,7 +1336,7 @@ class Animnode():
                 curveY.keyframe_points.insert(frame, co[1], kfOptions)
                 curveZ.keyframe_points.insert(frame, co[2], kfOptions)
 
-    def create_data_uv(self, obj, anim, animlength, options):
+    def create_data_uv(self, obj, anim, animlength, options={}):
         """Import animated texture coordinates."""
         fps = options.scene.render.fps
         if not obj.data:
@@ -1314,8 +1396,10 @@ class Animnode():
         """TODO: DOC."""
         def insert_kfp(fcurves, frame, val, dim):
             """TODO: DOC."""
+            # dim = len(val)
             for j in range(dim):
-                fcurves[j].keyframe_points.insert(frame, val[j], {'FAST'})
+                kf = fcurves[j].keyframe_points.insert(frame, val[j], {'FAST'})
+                kf.interpolation = 'LINEAR'
         # Get animation data
         animData = obj.animation_data
         if not animData:
@@ -1330,7 +1414,7 @@ class Animnode():
             if fcu.count(None) < 1:
                 rr = obj.nvb.restrot
                 insert_kfp(fcu, frame, [rr[3], rr[0], rr[1], rr[2]], 4)
-        if obj.rotation_mode == 'QUATERNION':
+        elif obj.rotation_mode == 'QUATERNION':
             dp = 'rotation_quaternion'
             fcu = [action.fcurves.find(dp, i) for i in range(4)]
             if fcu.count(None) < 1:
@@ -1348,7 +1432,7 @@ class Animnode():
         if fcu.count(None) < 1:
             insert_kfp(fcu, frame, obj.nvb.restloc, 3)
 
-    def create(self, obj, anim, animlength, options):
+    def create(self, obj, anim, animlength, options={}):
         """TODO:Doc."""
         if self.object_data:
             self.create_data_object(obj, anim, options)
@@ -1360,3 +1444,26 @@ class Animnode():
             self.create_data_uv(obj, anim, animlength, options)
         if self.shapedata:
             self.create_data_shape(obj, anim, animlength, options)
+
+    @staticmethod
+    def generate_ascii(obj, anim, asciiLines, options={}):
+        if not obj or not Node.exportNeeded(obj, anim):
+            return
+        # Type + Name
+        #node_type = nvb_utils.getNodeType(obj)
+        #node_name = nvb_utils.generate_node_name(obj, options.strip_trailing)
+        node_type = "dummy"
+        if obj.nvb.meshtype == nvb_def.Meshtype.EMITTER:
+            node_type = "emitter"
+        node_name = Node.getOriginalName(obj.name, anim.name)
+        asciiLines.append('  node ' + node_type + ' ' + node_name)
+        # Parent
+        #parent_name = nvb_utils.generate_node_name(obj.parent,
+        #                                           options.strip_trailing)
+        parent_name = nvb_def.null
+        if obj.parent:
+            parent_name = Node.getOriginalName(obj.parent.name, anim.name)
+        asciiLines.append('    parent ' + parent_name)
+        Node.generate_ascii_keys(obj, anim, asciiLines, options)
+        #Node.generate_ascii_keys_incompat(obj, anim, asciiLines, options)
+        asciiLines.append('  endnode')
