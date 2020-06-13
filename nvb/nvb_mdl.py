@@ -211,6 +211,7 @@ class Mdl():
     def loadAscii(self, ascii_block):
         geom_start = ascii_block.find("node ")
         anim_start = ascii_block.find("newanim ")
+        geom_end   = ascii_block.find("endmodelgeom ")
 
         if (anim_start > 0) and (geom_start > anim_start):
             raise nvb_def.MalformedMdlFile('Animations before geometry')
@@ -219,7 +220,6 @@ class Mdl():
 
         self.read_ascii_header(ascii_block[:geom_start-1])
         # Import Geometry
-        geom_end = anim_start if anim_start else len(ascii_block)
         #Mdl.read_ascii_geom(ascii_block[geom_start:geom_end],
         self.read_ascii_geom(ascii_block[geom_start:geom_end],
                             self.mdlnodes)
