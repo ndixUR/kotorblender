@@ -47,10 +47,16 @@ class Animation():
         new_anim.transtime = fps * self.transtime
         # new_anim.root = self.animroot
         #new_anim.root_obj = noderesolver.get_obj(self.animroot, -1)
-        new_anim.root = new_anim.root_obj = nvb_utils.searchNode(
+        search_result = nvb_utils.searchNode(
             mdl_base,
             lambda o, name=self.animroot: o.name.lower() == name.lower()
-        ).name
+        )
+        if not search_result:
+            search_result = mdl_base
+            print("retargeted animation from {} to {}".format(
+                self.animroot, mdl_base.name
+            ))
+        new_anim.root = new_anim.root_obj = search_result.name
         new_anim.frameEnd = nvb_utils.nwtime2frame(self.length) + new_anim.frameStart
         # events
         for ev_time, ev_name in self.events:
