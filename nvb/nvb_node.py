@@ -1352,7 +1352,7 @@ class Skinmesh(Trimesh):
             line = '  '
             if weights:
                 for w in weights:
-                    line += '  ' + w[0] + ' ' + str(round(w[1], 3))
+                    line += '  ' + w[0] + ' ' + str(round(w[1], 6))
             else:
                 # No weights for this vertex ... this is a problem
                 print('Kotorblender - WARNING: Missing vertex weight in ' + obj.name)
