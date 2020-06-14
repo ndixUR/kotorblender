@@ -203,6 +203,8 @@ class KB_PG_TEXTURE(bpy.types.PropertyGroup):
     spacingB = bpy.props.FloatProperty(default=0.0, update=prop_update)
     #upperleftcoords         %d %c (list)
     #lowerrightcoords        %d %c (list)
+    upperleftcoords = bpy.props.StringProperty(default="", update=prop_update)
+    lowerrightcoords = bpy.props.StringProperty(default="", update=prop_update)
 
 
 def nvb_update_emitter_prop(self, context):
