@@ -130,8 +130,10 @@ class GeometryNode():
     def setObjectData(self, obj):
         self.objref = obj.name  # used to resolve naming conflicts
         nvb_utils.setObjectRotationAurora(obj, self.orientation)
+        obj.nvb.restrot   = self.orientation
         obj.scale         = (self.scale, self.scale, self.scale)
         obj.location      = self.position
+        obj.nvb.restloc   = obj.location
         obj.nvb.wirecolor = self.wirecolor
         # add unprocessed data as text objects
         if (len(self.rawascii)):

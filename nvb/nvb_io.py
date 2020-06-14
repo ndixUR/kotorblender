@@ -1,6 +1,7 @@
 """TODO: DOC."""
 
 import os
+import re
 import bpy
 
 from . import nvb_glob
@@ -94,12 +95,24 @@ def loadMdl(operator,
                 print("Kotorblender - WARNING: No walkmesh found " +
                       wkmFilepath)
 
+    # read the ascii mdl text
     fp = os.fsencode(filepath)
-    asciiLines = [line.strip().split() for line in open(fp, 'r')]
+    ascii_mdl = ''
+    f = open(fp, 'r')
+    ascii_mdl = f.read()
+    f.close()
+
+    # strip any comments from the text immediately,
+    # newer method of text processing is not robust against comments
+    ascii_mdl = re.sub(r'#.+$', '', ascii_mdl, flags=re.MULTILINE)
+
+    # prepare the old style data
+    asciiLines = [line.strip().split() for line in ascii_mdl.splitlines()]
 
     print('Importing: ' + filepath)
     mdl = nvb_mdl.Mdl()
-    mdl.loadAscii(asciiLines)
+    #mdl.loadAscii(asciiLines)
+    mdl.loadAscii(ascii_mdl)
     mdl.importToScene(scene, wkm)
 
     # processing to use AABB node as trimesh for walkmesh file

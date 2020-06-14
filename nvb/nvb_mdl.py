@@ -28,6 +28,10 @@ class Mdl():
         self.compress_quats = False
         self.headlink       = False
 
+        self.animations = []
+
+        self.mdlnodes = []
+
 
     def loadAsciiNode(self, asciiBlock):
         if asciiBlock is None:
@@ -39,16 +43,18 @@ class Mdl():
         except (IndexError, AttributeError):
             raise nvb_def.MalformedMdlFile('Invalid node type')
 
-        switch = {'dummy':      nvb_node.Dummy,
-                  'patch':      nvb_node.Patch,
-                  'reference':  nvb_node.Reference,
-                  'trimesh':    nvb_node.Trimesh,
-                  'danglymesh': nvb_node.Danglymesh,
-                  'lightsaber': nvb_node.Lightsaber,
-                  'skin':       nvb_node.Skinmesh,
-                  'emitter':    nvb_node.Emitter,
-                  'light':      nvb_node.Light,
-                  'aabb':       nvb_node.Aabb}
+        switch = {
+            nvb_def.Nodetype.DUMMY:      nvb_node.Dummy,
+            nvb_def.Nodetype.PATCH:      nvb_node.Patch,
+            nvb_def.Nodetype.REFERENCE:  nvb_node.Reference,
+            nvb_def.Nodetype.TRIMESH:    nvb_node.Trimesh,
+            nvb_def.Nodetype.DANGLYMESH: nvb_node.Danglymesh,
+            nvb_def.Nodetype.LIGHTSABER: nvb_node.Lightsaber,
+            nvb_def.Nodetype.SKIN:       nvb_node.Skinmesh,
+            nvb_def.Nodetype.EMITTER:    nvb_node.Emitter,
+            nvb_def.Nodetype.LIGHT:      nvb_node.Light,
+            nvb_def.Nodetype.AABB:       nvb_node.Aabb
+        }
         try:
             node = switch[nodeType]()
         except KeyError:
@@ -86,6 +92,7 @@ class Mdl():
                 print('Kotorblender - WARNING: Node name conflict ' + key + '.')
             else:
                 self.nodeDict[key] = newNode
+                self.mdlnodes.append(newNode)
 
     def addAnimation(self, anim):
         if anim:
@@ -183,107 +190,143 @@ class Mdl():
             if not rootDummy:
                 return
 
-        for (animName, anim) in self.animDict.items():
-            anim.addAnimToScene(scene, rootDummy)
+        type(self).create_animations(self.animations, rootDummy)
 
-    def loadAscii(self, asciiLines):
-        State = enum.Enum('State', 'START HEADER GEOMETRY GEOMETRYNODE ANIMATION')
-        cs    = State.START
-        blockStart = -1
-        for idx, line in enumerate(asciiLines):
+    @staticmethod
+    def create_animations(animationlist, mdl_base):
+        """TODO: DOC."""
+        options = {
+            "anim_restpose": 1
+        }
+        # Load the 'default' animation first, so it is at the front
+        anims = [a for a in animationlist if a.name == 'default']
+        for a in anims:
+            a.create(mdl_base, options)
+        # Load the rest of the anims
+        anims = [a for a in animationlist if a.name != 'default']
+        for a in anims:
+            a.create(mdl_base, options)
+
+
+    def loadAscii(self, ascii_block):
+        geom_start = ascii_block.find("node ")
+        anim_start = ascii_block.find("newanim ")
+        geom_end   = ascii_block.find("endmodelgeom ")
+
+        if (anim_start > 0) and (geom_start > anim_start):
+            raise nvb_def.MalformedMdlFile('Animations before geometry')
+        if (geom_start < 0):
+            raise nvb_def.MalformedMdlFile('Unable to find geometry')
+
+        self.read_ascii_header(ascii_block[:geom_start-1])
+        # Import Geometry
+        #Mdl.read_ascii_geom(ascii_block[geom_start:geom_end],
+        self.read_ascii_geom(ascii_block[geom_start:geom_end],
+                            self.mdlnodes)
+        # Import Animations
+        if nvb_glob.importAnim and (anim_start > 0):
+            self.read_ascii_anims(ascii_block[anim_start:])
+
+
+    def read_ascii_anims(self, ascii_block):
+        """Load all animations from an ascii mdl block."""
+        delim = "newanim "
+        animList = [delim + b for b in ascii_block.split(delim) if b]
+        self.animations = list(map(
+            lambda txt: nvb_anim.Animation(ascii_data=txt),
+            animList
+        ))
+        for anim in self.animations:
+            self.addAnimation(anim)
+
+    #@staticmethod
+    def read_ascii_geom(self, ascii_block, nodelist):
+        """Load all geometry nodes from an ascii mdl block."""
+        delim = "node "
+        #print(ascii_block)
+        ascii_nodes = [delim + b for b in ascii_block.split(delim) if b]
+        for idx, ascii_node in enumerate(ascii_nodes):
+            ascii_lines = [l.strip().split() for l in ascii_node.splitlines()]
+            node = None
+            node_type = ''
+            node_name = 'UNNAMED'
+            try:  # Read node type
+                node_type = ascii_lines[0][1].lower()
+            except (IndexError, AttributeError):
+                raise nvb_def.MalformedMdlFile('Unable to read node type')
+            try:  # Read node name
+                node_name = ascii_lines[0][2].lower()
+            except (IndexError, AttributeError):
+                raise nvb_def.MalformedMdlFile('Unable to read node name')
+            #try:  # Create (node) object
+            #    node = Mdl.nodelookup[node_type](node_name)
+            #except KeyError:
+            #    raise nvb_def.MalformedMdlFile('Invalid node type')
+            # Parse and add to node list
+            #node.loadAscii(ascii_lines) #, idx)
+            self.loadAsciiNode(ascii_lines)
+            nodelist.append(node)
+
+    def read_ascii_header(self, ascii_block):
+        """TODO: DOC."""
+        ascii_lines = [l.strip().split() for l in ascii_block.splitlines()]
+        for line in ascii_lines:
             try:
-                label = line[0]
-            except IndexError:
-                # Probably empty line or whatever, just skip it
-                continue
+                label = line[0].lower()
+            except (IndexError, AttributeError):
+                continue  # Probably empty line, skip it
+            if label == 'newmodel':
+                try:
+                    self.name = line[1]
+                except (ValueError, IndexError):
+                    print("Kotorblender: WARNING - Unable to read model name.")
+            elif label == 'setsupermodel':
+                try:  # should be ['setsupermodel', modelname, supermodelname]
+                    #self.supermodel = line[2].lower()
+                    self.supermodel = line[2]
+                except (ValueError, IndexError):
+                    print("Kotorblender: WARNING - Unable to read supermodel. \
+                           Using default value " + self.supermodel)
+            elif label == 'classification':
+                try:
+                    #self.classification = line[1].lower()
+                    self.classification = line[1].title()
+                except (ValueError, IndexError):
+                    print("Kotorblender: WARNING - Unable to read \
+                           classification. \
+                           Using Default value " + self.classification)
+                if self.classification not in nvb_def.Classification.ALL:
+                    print("Kotorblender: WARNING - Invalid classification \
+                           '" + self.classification + "'")
+                    self.classification = nvb_def.Classification.UNKNOWN
+            elif label == 'classification_unk1':
+                try:
+                    self.unknownC1 = int(line[1])
+                except IndexError:
+                    print("Kotorblender - WARNING: Unable to read classification unknown. Default value " + self.unknownC1)
+            elif label == 'ignorefog':
+                try:
+                    self.ignorefog = int(line[1])
+                except IndexError:
+                    print("Kotorblender - WARNING: Unable to read ignorefog. Default value " + self.ignorefog)
+            elif label == 'compress_quaternions':
+                try:
+                    self.compress_quats = int(line[1])
+                except IndexError:
+                    print("Kotorblender - WARNING: Unable to read compress_quaternions. Default value " + self.compress_quats)
+            elif label == 'headlink':
+                try:
+                    self.headlink = int(line[1])
+                except IndexError:
+                    print("Kotorblender - WARNING: Unable to read headlink. Default value " + self.headlink)
+            elif label == 'setanimationscale':
+                try:
+                    self.animscale = float(line[1])
+                except (ValueError, IndexError):
+                    print("Kotorblender: WARNING - Unable to read \
+                           animationscale. \
+                           Using default value " + self.animscale)
 
-            if (cs == State.START):
-                if (label == 'newmodel'):
-                    try:
-                        self.name = line[1]
-                    except IndexError:
-                        raise nvb_def.MalformedMdlFile('Model has no name')
-                    cs = State.HEADER
-
-            elif (cs == State.HEADER):
-                if (label == 'beginmodelgeom'):
-                    # After this, a list of nodes has to follow
-                    cs = State.GEOMETRY
-                elif (label == 'setsupermodel'):
-                    try:
-                        # line should be ['setsupermodel', modelname, supermodelname]
-                        self.supermodel = line[2]
-                    except IndexError:
-                        print("Kotorblender - WARNING: Unable to read supermodel. Default value " + self.supermodel)
-
-                elif (label == 'classification'):
-                    try:
-                        self.classification = line[1].title()
-                    except IndexError:
-                        print("Kotorblender - WARNING: Unable to read classification. Default value " + self.classification)
-
-                    if self.classification not in nvb_def.Classification.ALL:
-                        print("Kotorblender - WARNING: Invalid classification '" + self.classification + "'")
-                        self.classification = nvb_def.Classification.UNKNOWN
-                elif (label == 'classification_unk1'):
-                    try:
-                        self.unknownC1 = int(line[1])
-                    except IndexError:
-                        print("Kotorblender - WARNING: Unable to read classification unknown. Default value " + self.unknownC1)
-                elif (label == 'ignorefog'):
-                    try:
-                        self.ignorefog = int(line[1])
-                    except IndexError:
-                        print("Kotorblender - WARNING: Unable to read ignorefog. Default value " + self.ignorefog)
-                elif (label == 'compress_quaternions'):
-                    try:
-                        self.compress_quats = int(line[1])
-                    except IndexError:
-                        print("Kotorblender - WARNING: Unable to read compress_quaternions. Default value " + self.compress_quats)
-                elif (label == 'headlink'):
-                    try:
-                        self.headlink = int(line[1])
-                    except IndexError:
-                        print("Kotorblender - WARNING: Unable to read headlink. Default value " + self.headlink)
-                elif (label == 'setanimationscale'):
-                    try:
-                        self.animscale = float(line[1])
-                    except IndexError:
-                        print("Kotorblender - WARNING: Unable to read animationscale. Default value " + self.animscale)
-
-            elif (cs == State.GEOMETRY):
-                if (label == 'node'):
-                    blockStart = idx
-                    cs = State.GEOMETRYNODE
-                if (label == 'endmodelgeom'):
-                    # After this, either animations or eof.
-                    # Or maybe we don't want animations at all.
-                    if (nvb_glob.importAnim) and (not nvb_glob.minimapMode):
-                        cs = State.ANIMATION
-                    else:
-                        return
-
-            elif (cs == State.GEOMETRYNODE):
-                if (label == 'endnode'):
-                    #node = self.parseGeometryNode(lines[blockStart:idx+1])
-                    self.loadAsciiNode(asciiLines[blockStart:idx+1])
-                    blockStart = -1
-                    cs = State.GEOMETRY
-                elif (label == 'node'):
-                    raise nvb_def.MalformedMdlFile('Unexpected "endnode" at line' + str(idx))
-
-            elif (cs == State.ANIMATION):
-                if (label == 'newanim'):
-                    if (blockStart < 0):
-                        blockStart = idx
-                    else:
-                        raise nvb_def.MalformedMdlFile('Unexpected "newanim" at line' + str(idx))
-                if (label == 'doneanim'):
-                    if (blockStart > 0):
-                        self.loadAsciiAnimation(asciiLines[blockStart:idx+1])
-                        blockStart = -1
-                    else:
-                        raise nvb_def.MalformedMdlFile('Unexpected "doneanim" at line' + str(idx))
 
     def geometryToAscii(self, bObject, asciiLines, simple = False, nameDict = None):
 
@@ -316,14 +359,14 @@ class Mdl():
         for (imporder, child) in childList:
             self.geometryToAscii(child, asciiLines, simple, nameDict=nameDict)
 
-    def animationsToAscii(self, asciiLines):
-        for scene in bpy.data.scenes:
-            animRootDummy = nvb_utils.getAnimationRootdummy(scene)
-            if animRootDummy:
-                # Check the name of the roodummy
-                # if animRootDummy.name.rfind(self.validExports[0]):
-                anim = nvb_anim.Animation()
-                anim.toAscii(scene, animRootDummy, asciiLines, self.name)
+
+    def generateAsciiAnimations(self, ascii_lines, rootDummy, options={}):
+        if rootDummy.nvb.animList:
+            for anim in rootDummy.nvb.animList:
+                print('export animation ' + anim.name)
+                nvb_anim.Animation.generateAscii(rootDummy, anim,
+                                                 ascii_lines, options)
+
 
     def generateAscii(self, asciiLines, rootDummy, exports = {'ANIMATION', 'WALKMESH'}):
         self.name           = rootDummy.name
@@ -415,7 +458,7 @@ class Mdl():
         if 'ANIMATION' in exports:
             asciiLines.append('')
             asciiLines.append('# ANIM ASCII')
-            self.animationsToAscii(asciiLines)
+            self.generateAsciiAnimations(asciiLines, rootDummy)
         # The End
         asciiLines.append('donemodel ' + self.name)
         asciiLines.append('')

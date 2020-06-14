@@ -10,6 +10,10 @@ class MalformedMdlFile(Exception):
 
 
 # Some presets
+# Frame at which to start all animations
+anim_globstart = 1
+# Offset between two imported animations (minimum)
+anim_offset = 60
 fps = 30
 sg_layer_name  = 'smoothgroups'
 shagrPrefix    = 'shadegr.'
@@ -159,3 +163,16 @@ class Classification():
 
     def __init__():
         pass
+
+
+class Nodetype():
+    DUMMY       = 'dummy'
+    PATCH       = 'patch'
+    REFERENCE   = 'reference'
+    TRIMESH     = 'trimesh'
+    DANGLYMESH  = 'danglymesh'
+    SKIN        = 'skin'
+    EMITTER     = 'emitter'
+    LIGHT       = 'light'
+    AABB        = 'aabb'
+    LIGHTSABER  = 'lightsaber'
