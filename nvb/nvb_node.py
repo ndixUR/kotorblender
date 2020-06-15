@@ -1971,7 +1971,7 @@ class Aabb(Trimesh):
                                     round(wkmv1[1] - v1[1], 6),
                                     round(wkmv1[2] - v1[2], 6))
                 break
-        bpy.data.objects[self.name].nvb.lytposition = self.lytposition
+        bpy.data.objects[self.objref].nvb.lytposition = self.lytposition
         #pprint(bpy.data.objects[self.name])
 
     def addAABBToAscii(self, obj, asciiLines):
