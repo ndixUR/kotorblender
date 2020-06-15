@@ -150,7 +150,9 @@ def searchNodeInModel(obj, test):
 def isRootDummy(obj, dummytype = nvb_def.Dummytype.MDLROOT):
     if not obj:
         return False
-    return (obj.type == 'EMPTY') and (obj.nvb.dummytype == dummytype) and (not obj.nvb.isanimation)
+    return (obj.type == 'EMPTY') and \
+           (obj.nvb.dummytype == dummytype) and \
+           (not obj.nvb.isanimation)
 
 
 def getNodeType(obj):
@@ -188,12 +190,45 @@ def get_children_recursive(obj, obj_list):
     obj_list.extend(searchNodeAll(obj, lambda o: o is not None))
 
 
+def is_mdl_base(obj):
+    return isRootDummy(obj)
+
+
 def get_obj_mdl_base(obj):
     """
     Helper following neverblender naming, compatibility layer
     Get ancestor-or-self MDL root
     """
     return ancestorNode(obj, isRootDummy)
+
+
+def get_mdl_base(obj=None, scene=None):
+    """
+    Method to find the best MDL root dummy based on user intent
+    """
+    # Use first selected object as search context if none provided
+    if obj is None and scene:
+        selected_objects = [o for o in scene.objects if o.select]
+        if len(selected_objects):
+            obj = selected_objects[0]
+    elif obj is None and bpy.context and bpy.context.scene:
+        selected_objects = [o for o in bpy.context.scene.objects if o.select]
+        if len(selected_objects):
+            obj = selected_objects[0]
+    # 1. Check the object and its parents
+    match = get_obj_mdl_base(obj)
+    if match:
+        return match
+    # 2. Search 'Empty' objects in the current scene
+    if scene:
+        matches = [m for m in scene.objects if is_mdl_base(m)]
+        if matches:
+            return matches[0]
+    # 3. Search all objects, return first
+    matches = [m for m in bpy.data.objects if is_mdl_base(m)]
+    if matches:
+        return matches[0]
+    return None
 
 
 def get_fcurve(action, data_path, index=0, group_name=None):

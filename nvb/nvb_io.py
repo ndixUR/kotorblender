@@ -10,37 +10,6 @@ from . import nvb_mdl
 from . import nvb_utils
 
 
-def findRootDummy():
-    # Look for a rootdummy:
-    # 1. Current selected object ?
-    # 2. Search 'Empty' objects in the current scene
-    # 4. Search all objects
-
-    obj = None
-    selected_objects = [ o for o in bpy.context.scene.objects if o.select ]
-    if len(selected_objects):
-        obj = selected_objects[0]
-    # Selected object
-    if nvb_utils.isRootDummy(obj, nvb_def.Dummytype.MDLROOT):
-        return obj
-    else:
-        # Search ancestors of active object
-        obj = nvb_utils.ancestorNode(bpy.context.active_object, nvb_utils.isRootDummy)
-        if obj:
-            return obj
-        # Search objects in active scene
-        if nvb_glob.scene:
-            for obj in nvb_glob.scene.objects:
-                if nvb_utils.isRootDummy(obj, nvb_def.Dummytype.MDLROOT):
-                    return obj
-        # Search all data
-        for obj in bpy.data.objects:
-            if nvb_utils.isRootDummy(obj, nvb_def.Dummytype.MDLROOT):
-                return obj
-
-    return None
-
-
 def loadMdl(operator,
             context,
             filepath = '',
@@ -168,7 +137,7 @@ def saveMdl(operator,
             except:
                 pass
 
-    mdlRoot = findRootDummy()
+    mdlRoot = nvb_utils.get_mdl_base(scene=bpy.context.scene)
     if mdlRoot:
         print('Kotorblender: Exporting ' + mdlRoot.name)
         mdl = nvb_mdl.Mdl()
