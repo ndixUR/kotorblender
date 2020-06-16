@@ -42,6 +42,7 @@ if 'bpy' in locals():
 
     importlib.reload(nvb.nvb_props)
     importlib.reload(nvb.nvb_ops)
+    importlib.reload(nvb.nvb_ops_anim)
     importlib.reload(nvb.nvb_ui)
 else:
     from kotorblender.nvb import nvb_def
@@ -54,6 +55,7 @@ else:
 
     from kotorblender.nvb import nvb_props
     from kotorblender.nvb import nvb_ops
+    from kotorblender.nvb import nvb_ops_anim
     from kotorblender.nvb import nvb_ui
 
 import bpy

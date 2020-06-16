@@ -1,43 +1,13 @@
 """TODO: DOC."""
 
 import os
+import re
 import bpy
 
 from . import nvb_glob
 from . import nvb_def
 from . import nvb_mdl
 from . import nvb_utils
-
-
-def findRootDummy():
-    # Look for a rootdummy:
-    # 1. Current selected object ?
-    # 2. Search 'Empty' objects in the current scene
-    # 4. Search all objects
-
-    obj = None
-    selected_objects = [ o for o in bpy.context.scene.objects if o.select ]
-    if len(selected_objects):
-        obj = selected_objects[0]
-    # Selected object
-    if nvb_utils.isRootDummy(obj, nvb_def.Dummytype.MDLROOT):
-        return obj
-    else:
-        # Search ancestors of active object
-        obj = nvb_utils.ancestorNode(bpy.context.active_object, nvb_utils.isRootDummy)
-        if obj:
-            return obj
-        # Search objects in active scene
-        if nvb_glob.scene:
-            for obj in nvb_glob.scene.objects:
-                if nvb_utils.isRootDummy(obj, nvb_def.Dummytype.MDLROOT):
-                    return obj
-        # Search all data
-        for obj in bpy.data.objects:
-            if nvb_utils.isRootDummy(obj, nvb_def.Dummytype.MDLROOT):
-                return obj
-
-    return None
 
 
 def loadMdl(operator,
@@ -94,12 +64,24 @@ def loadMdl(operator,
                 print("Kotorblender - WARNING: No walkmesh found " +
                       wkmFilepath)
 
+    # read the ascii mdl text
     fp = os.fsencode(filepath)
-    asciiLines = [line.strip().split() for line in open(fp, 'r')]
+    ascii_mdl = ''
+    f = open(fp, 'r')
+    ascii_mdl = f.read()
+    f.close()
+
+    # strip any comments from the text immediately,
+    # newer method of text processing is not robust against comments
+    ascii_mdl = re.sub(r'#.+$', '', ascii_mdl, flags=re.MULTILINE)
+
+    # prepare the old style data
+    asciiLines = [line.strip().split() for line in ascii_mdl.splitlines()]
 
     print('Importing: ' + filepath)
     mdl = nvb_mdl.Mdl()
-    mdl.loadAscii(asciiLines)
+    #mdl.loadAscii(asciiLines)
+    mdl.loadAscii(ascii_mdl)
     mdl.importToScene(scene, wkm)
 
     # processing to use AABB node as trimesh for walkmesh file
@@ -155,7 +137,7 @@ def saveMdl(operator,
             except:
                 pass
 
-    mdlRoot = findRootDummy()
+    mdlRoot = nvb_utils.get_mdl_base(scene=bpy.context.scene)
     if mdlRoot:
         print('Kotorblender: Exporting ' + mdlRoot.name)
         mdl = nvb_mdl.Mdl()

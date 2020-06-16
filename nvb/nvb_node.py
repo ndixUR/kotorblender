@@ -130,8 +130,10 @@ class GeometryNode():
     def setObjectData(self, obj):
         self.objref = obj.name  # used to resolve naming conflicts
         nvb_utils.setObjectRotationAurora(obj, self.orientation)
+        obj.nvb.restrot   = self.orientation
         obj.scale         = (self.scale, self.scale, self.scale)
         obj.location      = self.position
+        obj.nvb.restloc   = obj.location
         obj.nvb.wirecolor = self.wirecolor
         # add unprocessed data as text objects
         if (len(self.rawascii)):
@@ -1350,7 +1352,7 @@ class Skinmesh(Trimesh):
             line = '  '
             if weights:
                 for w in weights:
-                    line += '  ' + w[0] + ' ' + str(round(w[1], 3))
+                    line += '  ' + w[0] + ' ' + str(round(w[1], 6))
             else:
                 # No weights for this vertex ... this is a problem
                 print('Kotorblender - WARNING: Missing vertex weight in ' + obj.name)
@@ -1969,7 +1971,7 @@ class Aabb(Trimesh):
                                     round(wkmv1[1] - v1[1], 6),
                                     round(wkmv1[2] - v1[2], 6))
                 break
-        bpy.data.objects[self.name].nvb.lytposition = self.lytposition
+        bpy.data.objects[self.objref].nvb.lytposition = self.lytposition
         #pprint(bpy.data.objects[self.name])
 
     def addAABBToAscii(self, obj, asciiLines):
