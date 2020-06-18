@@ -45,14 +45,16 @@ def loadMdl(operator,
     if importWalkmesh:
         filetypes = ['pwk', 'dwk', 'wok']
         (wkmPath, wkmFilename) = os.path.split(filepath)
+        using_extra_extension = False
+        if wkmFilename.endswith('.ascii'):
+            wkmFilename = os.path.splitext(wkmFilename)[0]
+            using_extra_extension = True
         for wkmType in filetypes:
-            if wkmFilename.endswith('.ascii'):
-                wkmFilename = os.path.splitext(wkmFilename)[0]
             wkmFilepath = os.path.join(wkmPath,
                                        os.path.splitext(wkmFilename)[0] +
                                        '.' + wkmType)
             fp = os.fsencode(wkmFilepath)
-            if not os.path.isfile(fp):
+            if using_extra_extension or not os.path.isfile(fp):
                 fp = os.fsencode(wkmFilepath + '.ascii')
             try:
                 asciiLines = [line.strip().split() for line in open(fp, 'r')]
@@ -61,8 +63,17 @@ def loadMdl(operator,
                 # adding walkmesh to scene has to be done within mdl import now
                 #wkm.importToScene(scene)
             except IOError:
-                print("Kotorblender - WARNING: No walkmesh found " +
-                      wkmFilepath)
+                print(
+                    "Kotorblender - WARNING: No walkmesh found {}".format(
+                        fp
+                    )
+                )
+            except:
+                print(
+                    "Kotorblender - WARNING: Invalid walkmesh found {}".format(
+                        fp
+                    )
+                )
 
     # read the ascii mdl text
     fp = os.fsencode(filepath)
