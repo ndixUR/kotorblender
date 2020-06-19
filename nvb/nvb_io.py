@@ -135,6 +135,8 @@ def saveMdl(operator,
     nvb_glob.exportTxi          = exportTxi
     nvb_glob.applyModifiers     = applyModifiers
     nvb_glob.scene              = bpy.context.scene
+    # temporary forced options:
+    frame_set_zero              = True
 
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -147,6 +149,16 @@ def saveMdl(operator,
                     texture.nvb.exported_in_save = False
             except:
                 pass
+
+    # Set frame to zero, if specified in options
+    frame_set_current = None
+    if frame_set_zero and bpy.context.scene:
+        frame_set_current = bpy.context.scene.frame_current
+        # this technique does not work, docs say use frame_set
+        #options.scene.frame_current = 0
+        #bpy.context.scene.update()
+        bpy.context.scene.frame_set(0)
+        #print('frame set to 0 for export')
 
     mdlRoot = nvb_utils.get_mdl_base(scene=bpy.context.scene)
     if mdlRoot:
@@ -204,5 +216,10 @@ def saveMdl(operator,
                         texture.nvb.exported_in_save = False
                 except:
                     pass
+
+    # Return frame to pre-export, if specified in options
+    if frame_set_current is not None and bpy.context.scene:
+        #print('current frame restored to {}'.format(frame_set_current))
+        bpy.context.scene.frame_set(frame_set_current)
 
     return {'FINISHED'}
