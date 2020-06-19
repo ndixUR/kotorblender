@@ -1203,7 +1203,7 @@ class Animnode():
             elif label == 'scale':
                 dp = 'scale'
                 dp_dim = 3
-                new_values = [[v] * dp_dim for v in vals]
+                new_values = [[v[0]] * dp_dim for v in vals]
             return new_values, dp, dp_dim
 
         #fps = options.scene.render.fps
@@ -1431,6 +1431,9 @@ class Animnode():
         fcu = [action.fcurves.find('location', i) for i in range(3)]
         if fcu.count(None) < 1:
             insert_kfp(fcu, frame, obj.nvb.restloc, 3)
+        fcu = [action.fcurves.find('scale', i) for i in range(3)]
+        if fcu.count(None) < 1:
+            insert_kfp(fcu, frame, [obj.nvb.restscl] * 3, 3)
 
     def create(self, obj, anim, animlength, options={}):
         """TODO:Doc."""
