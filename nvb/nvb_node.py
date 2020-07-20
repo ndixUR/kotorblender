@@ -1350,14 +1350,14 @@ class Skinmesh(Trimesh):
         # Get a list of skingroups for this object:
         # A vertex group is a skingroup if there is an object in the mdl
         # with the same name as the group
-        skingroups = []
+        skingroups = {}
         for group in obj.vertex_groups:
             if nvb_utils.searchNodeInModel(
                 obj,
                 lambda o, test_name=group.name:
                     o.name == test_name or \
                     re.match(r'{}\.\d\d\d'.format(test_name), o.name)):
-                skingroups.append(group)
+                skingroups[group.index] = group
 
         mesh = self.getExportMesh(obj)
 
