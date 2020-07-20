@@ -300,9 +300,10 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
             #print(obj.nvb.render)
             self.boner(amt, c, obj, bone)
 
-    def adjust_control_handles(self, amt, edit_bone):
+    def adjust_control_handles(self, amt_obj, edit_bone):
         if edit_bone is None:
             return
+        amt = amt_obj.data
         obj_name = 'PSB_' + edit_bone.name
         obj = bpy.data.objects.get(obj_name)
         if self.is_control_handle(obj):
@@ -362,10 +363,10 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
             edit_bone.tail = ctl_vec + edit_bone.head
             print(edit_bone.tail)
             print(edit_bone.matrix)
-            print(bpy.data.objects['Armature'].matrix_world * edit_bone.matrix)
+            print(amt_obj.matrix_world * edit_bone.matrix)
 
         for c in edit_bone.children:
-            self.adjust_control_handles(amt, c)
+            self.adjust_control_handles(amt_obj, c)
 
 
     def flatten_old_pseudobones(self, amt, obj):
@@ -405,7 +406,10 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
                 #ct.inverse_matrix = amt.data.bones.get(parent_bone_name).matrix_world.inverted()
                 ct.subtarget = parent_bone_name
                 #obj.active = True
-                ct.inverse_matrix = (bpy.data.objects['Armature'].matrix_world * amt.data.edit_bones.get(parent_bone_name).matrix).inverted()
+                ct.inverse_matrix = (
+                    amt.matrix_world *
+                    amt.data.edit_bones.get(parent_bone_name).matrix
+                ).inverted()
                 ###ctx = bpy.context.copy()
                 ###ctx['constraint'] = ct
                 ###print(ctx.keys())
@@ -421,28 +425,36 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
 
     def execute(self, context):
         #bpy.ops.object.add(type='ARMATURE', enter_editmode=True, location=context.scene.objects['cutscenedummy'].location)
+        mdl = nvb_utils.get_mdl_base()
+        node_cutscenedummy = nvb_utils.get_node_by_name(mdl, 'cutscenedummy')
+        node_rootdummy = nvb_utils.get_node_by_name(mdl, 'rootdummy')
+        if node_cutscenedummy is None or \
+           node_rootdummy is None:
+            return {'FINISHED'}
         bpy.ops.object.armature_add()
         ob = bpy.context.scene.objects.active
         ob.show_x_ray = True
         # Make this modelname_amt
-        amt_name = 'Armature'
+        amt_name = '{}.armature'.format(mdl.name)
         ob.name = amt_name
         ob.show_axis = True
-        ob.parent = context.scene.objects['cutscenedummy']
-        ob.location = context.scene.objects['cutscenedummy'].location
+        #ob.parent = context.scene.objects['cutscenedummy']
+        ob.parent = mdl
+        ob.location = node_cutscenedummy.location
         #context.scene.objects.active = ob
         print(dir(ob))
         amt = ob.data
         print(dir(amt))
-        amt.name = 'ArmatureAmt'
+        amt.name = amt_name
         #amt.show_axes = True
         bpy.ops.object.mode_set(mode='EDIT')
-        amt.edit_bones[0].tail = context.scene.objects['rootdummy'].location
+        amt.edit_bones[0].tail = node_rootdummy.location
         #self.boner(amt, context.scene.objects['rootdummy'], pbone=amt.edit_bones[0])
-        self.boner(amt, context.scene.objects['rootdummy'], pbone=amt.edit_bones[0])
-        self.adjust_control_handles(amt, amt.edit_bones[0])
-        self.flatten_old_pseudobones(ob, context.scene.objects['PSB_rootdummy'])
-        self.child_to_bones(ob, context.scene.objects['cutscenedummy'])
+        self.boner(amt, node_rootdummy, pbone=amt.edit_bones[0])
+        self.adjust_control_handles(ob, amt.edit_bones[0])
+        psb_rootdummy = nvb_utils.get_node_by_name(mdl, 'psb_rootdummy')
+        self.flatten_old_pseudobones(ob, psb_rootdummy)
+        self.child_to_bones(ob, node_cutscenedummy)
         bpy.ops.object.mode_set(mode='OBJECT')
         # apply armature deformation modifier to skin meshes
         for name, obj in context.scene.objects.items():
