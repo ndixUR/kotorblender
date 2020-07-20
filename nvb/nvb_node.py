@@ -1376,7 +1376,7 @@ class Skinmesh(Trimesh):
                 # influences now to make the vertex format compliant
                 weights = sorted(weights, key=lambda w: w[1], reverse=True)[0:4]
             total_weight = sum([w[1] for w in weights])
-            if round(total_weight, 3) != 1.0:
+            if total_weight > 0.0 and round(total_weight, 3) != 1.0:
                 # normalize weights to equal 1.0
                 for w in weights:
                     w[1] /= total_weight
