@@ -931,7 +931,18 @@ class Trimesh(GeometryNode):
             return (len(uvList)-1)
 
 
-    def addMeshDataToAscii(self, obj, asciiLines, simple = False):
+    def getExportMesh(self, obj):
+        '''
+        Get the export mesh for an object,
+        This mesh has modifiers applied as requested,
+        using settings matching nvb_glob meshConvert.
+        This mesh should be removed by caller when done with it, like so:
+          bpy.data.meshes.remove(mesh)
+        TODO: retain the mesh across contexts instead of recreating every time.
+        '''
+        if obj is None:
+            return None
+
         mesh = obj.to_mesh(nvb_glob.scene, nvb_glob.applyModifiers, nvb_glob.meshConvert)
         for p in mesh.polygons:
             p.use_smooth = True
@@ -956,6 +967,12 @@ class Trimesh(GeometryNode):
 
         # Recalculate tessfaces for export
         mesh.calc_tessface()
+
+        return mesh
+
+
+    def addMeshDataToAscii(self, obj, asciiLines, simple = False):
+        mesh = self.getExportMesh(obj)
 
         # Calculate smooth groups
         smoothGroups    = []
@@ -1224,14 +1241,21 @@ class Danglymesh(Trimesh):
         vgroupName = obj.nvb.constraints
         vgroup     = obj.vertex_groups[vgroupName]
 
-        numVerts = len(obj.data.vertices)
-        asciiLines.append('  constraints ' + str(numVerts))
-        for i, v in enumerate(obj.data.vertices):
-            try:
-                asciiLines.append('    ' + str(round(vgroup.weight(i)*255, 3)))
-            except:
-                # Vertex is not part of this group
-                asciiLines.append('    0.0')
+        mesh = self.getExportMesh(obj)
+
+        asciiLines.append(
+            '  constraints {}'.format(len(mesh.vertices))
+        )
+        for v in mesh.vertices:
+            # In case vertex is not weighted with dangly constraint
+            weight = 0.0
+            for vg in v.groups:
+                if vg.group != vgroup.index:
+                    continue
+                weight = round(vg.weight * 255, 3)
+            asciiLines.append('    {}'.format(weight))
+
+        bpy.data.meshes.remove(mesh)
 
 
     def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
@@ -1335,18 +1359,30 @@ class Skinmesh(Trimesh):
                     re.match(r'{}\.\d\d\d'.format(test_name), o.name)):
                 skingroups.append(group)
 
+        mesh = self.getExportMesh(obj)
+
         vertexWeights = []
-        for i, v in enumerate(obj.data.vertices):
+        for v in mesh.vertices:
             weights = []
-            for group in skingroups:
-                try:
-                    weights.append([group.name, group.weight(i)])
-                except:
-                    # Vertex not part of this group
-                    pass
+            for vg in v.groups:
+                if not vg.group in skingroups:
+                    # vertex group is not for bone weights, skip
+                    continue
+                group = skingroups[vg.group]
+                weights.append([group.name, vg.weight])
+            if len(weights) > 4:
+                # 4 is the maximum number of influencing bones per vertex
+                # for MDL format, therefore we will remove the smallest
+                # influences now to make the vertex format compliant
+                weights = sorted(weights, key=lambda w: w[1], reverse=True)[0:4]
+            total_weight = sum([w[1] for w in weights])
+            if round(total_weight, 3) != 1.0:
+                # normalize weights to equal 1.0
+                for w in weights:
+                    w[1] /= total_weight
             vertexWeights.append(weights)
 
-        numVerts = len(obj.data.vertices)
+        numVerts = len(mesh.vertices)
         asciiLines.append('  weights ' + str(numVerts))
         for weights in vertexWeights:
             line = '  '
@@ -1358,6 +1394,8 @@ class Skinmesh(Trimesh):
                 print('Kotorblender - WARNING: Missing vertex weight in ' + obj.name)
                 line = 'ERROR: no weight'
             asciiLines.append(line)
+
+        bpy.data.meshes.remove(mesh)
 
 
     def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
