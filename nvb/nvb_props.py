@@ -302,6 +302,9 @@ class KB_PG_OBJECT(bpy.types.PropertyGroup):
                                             size=3,
                                             default=(0.0, 0.0, 0.0),
                                             options=set())
+    restscl = bpy.props.FloatProperty(name='Rest Pose Scale',
+                                      default=0.0,
+                                      options=set())
 
     imporder = bpy.props.IntProperty(name = "Order of Import", default = 0)
 

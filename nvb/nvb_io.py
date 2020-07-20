@@ -45,14 +45,16 @@ def loadMdl(operator,
     if importWalkmesh:
         filetypes = ['pwk', 'dwk', 'wok']
         (wkmPath, wkmFilename) = os.path.split(filepath)
+        using_extra_extension = False
+        if wkmFilename.endswith('.ascii'):
+            wkmFilename = os.path.splitext(wkmFilename)[0]
+            using_extra_extension = True
         for wkmType in filetypes:
-            if wkmFilename.endswith('.ascii'):
-                wkmFilename = os.path.splitext(wkmFilename)[0]
             wkmFilepath = os.path.join(wkmPath,
                                        os.path.splitext(wkmFilename)[0] +
                                        '.' + wkmType)
             fp = os.fsencode(wkmFilepath)
-            if not os.path.isfile(fp):
+            if using_extra_extension or not os.path.isfile(fp):
                 fp = os.fsencode(wkmFilepath + '.ascii')
             try:
                 asciiLines = [line.strip().split() for line in open(fp, 'r')]
@@ -61,8 +63,17 @@ def loadMdl(operator,
                 # adding walkmesh to scene has to be done within mdl import now
                 #wkm.importToScene(scene)
             except IOError:
-                print("Kotorblender - WARNING: No walkmesh found " +
-                      wkmFilepath)
+                print(
+                    "Kotorblender - WARNING: No walkmesh found {}".format(
+                        fp
+                    )
+                )
+            except:
+                print(
+                    "Kotorblender - WARNING: Invalid walkmesh found {}".format(
+                        fp
+                    )
+                )
 
     # read the ascii mdl text
     fp = os.fsencode(filepath)
@@ -124,6 +135,8 @@ def saveMdl(operator,
     nvb_glob.exportTxi          = exportTxi
     nvb_glob.applyModifiers     = applyModifiers
     nvb_glob.scene              = bpy.context.scene
+    # temporary forced options:
+    frame_set_zero              = True
 
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -136,6 +149,16 @@ def saveMdl(operator,
                     texture.nvb.exported_in_save = False
             except:
                 pass
+
+    # Set frame to zero, if specified in options
+    frame_set_current = None
+    if frame_set_zero and bpy.context.scene:
+        frame_set_current = bpy.context.scene.frame_current
+        # this technique does not work, docs say use frame_set
+        #options.scene.frame_current = 0
+        #bpy.context.scene.update()
+        bpy.context.scene.frame_set(0)
+        #print('frame set to 0 for export')
 
     mdlRoot = nvb_utils.get_mdl_base(scene=bpy.context.scene)
     if mdlRoot:
@@ -193,5 +216,10 @@ def saveMdl(operator,
                         texture.nvb.exported_in_save = False
                 except:
                     pass
+
+    # Return frame to pre-export, if specified in options
+    if frame_set_current is not None and bpy.context.scene:
+        #print('current frame restored to {}'.format(frame_set_current))
+        bpy.context.scene.frame_set(frame_set_current)
 
     return {'FINISHED'}

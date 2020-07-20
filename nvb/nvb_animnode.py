@@ -742,6 +742,12 @@ class Node():
             if action:
                 Node.getKeysFromAction(anim, action, keyDict)
 
+        # Light Data
+        if animObj.data and animObj.data.animation_data:
+            action = animObj.data.animation_data.action
+            if action:
+                Node.getKeysFromAction(anim, action, keyDict)
+
         l_str   = str
         l_round = round
 
@@ -837,34 +843,36 @@ class Node():
         # this is the root node, must be included
         if animObj.parent is None:
             return True
-        # this node has animation controllers, include it
-        if ((animObj.animation_data and \
-             animObj.animation_data.action and \
-             animObj.animation_data.action.fcurves and \
-             len(animObj.animation_data.action.fcurves) > 0 and \
-             len(list(filter(
-                lambda fc: len([
-                    kfp for kfp in fc.keyframe_points \
-                    if kfp.co[0] >= anim.frameStart and \
-                    kfp.co[0] <= anim.frameEnd
-                ]),
-                animObj.animation_data.action.fcurves
-             )))) or \
-            (animObj.active_material and \
-             animObj.active_material.animation_data and \
-             animObj.active_material.animation_data.action and \
-             animObj.active_material.animation_data.action.fcurves and \
-             len(animObj.active_material.animation_data.action.fcurves) > 0 and \
-             len(list(filter(
-                lambda fc: len([
-                    kfp for kfp in fc.keyframe_points \
-                    if kfp.co[0] >= anim.frameStart and \
-                    kfp.co[0] <= anim.frameEnd
-                ]),
-                animObj.active_material.animation_data.action.fcurves
-             ))))):
-            print('exportNeeded for ' + animObj.name)
-            return True
+        # test for object controllers, loc/rot/scale/selfillum
+        objects = [animObj]
+        try:
+            # this is for light controllers, radius/color:
+            if animObj.data:
+                objects.append(animObj.data)
+            # this is for secondary obj controller, alpha:
+            if animObj.active_material:
+                objects.append(animObj.active_material)
+        except:
+            pass
+        # test the found objects for animation controllers
+        for obj in objects:
+            if ((obj.animation_data and \
+                 obj.animation_data.action and \
+                 obj.animation_data.action.fcurves and \
+                 len(obj.animation_data.action.fcurves) > 0 and \
+                 len(list(filter(
+                    lambda fc: len([
+                        kfp for kfp in fc.keyframe_points \
+                        if kfp.co[0] >= anim.frameStart and \
+                        kfp.co[0] <= anim.frameEnd
+                    ]),
+                    obj.animation_data.action.fcurves
+                 ))))):
+                # this node has animation controllers, include it
+                #XXX match actual controllers sometime
+                # (current will match ANY animation)
+                #print('exportNeeded for ' + animObj.name)
+                return True
         # if any children of this node will be included, this node must be
         for child in animObj.children:
             if Node.exportNeeded(child, anim):
@@ -1203,7 +1211,7 @@ class Animnode():
             elif label == 'scale':
                 dp = 'scale'
                 dp_dim = 3
-                new_values = [[v] * dp_dim for v in vals]
+                new_values = [[v[0]] * dp_dim for v in vals]
             return new_values, dp, dp_dim
 
         #fps = options.scene.render.fps
@@ -1431,6 +1439,9 @@ class Animnode():
         fcu = [action.fcurves.find('location', i) for i in range(3)]
         if fcu.count(None) < 1:
             insert_kfp(fcu, frame, obj.nvb.restloc, 3)
+        fcu = [action.fcurves.find('scale', i) for i in range(3)]
+        if fcu.count(None) < 1:
+            insert_kfp(fcu, frame, [obj.nvb.restscl] * 3, 3)
 
     def create(self, obj, anim, animlength, options={}):
         """TODO:Doc."""
