@@ -231,6 +231,16 @@ def get_mdl_base(obj=None, scene=None):
     return None
 
 
+def get_node_by_name(obj, name):
+    """
+    Method to find a node in MDL based on name w/ case-insensitive matching
+    """
+    return searchNodeInModel(
+        obj,
+        lambda o: o.name.lower() == name.lower()
+    )
+
+
 def get_fcurve(action, data_path, index=0, group_name=None):
     """Get the fcurve with specified properties or create one."""
     fcu = action.fcurves.find(data_path, index)
