@@ -500,6 +500,9 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
                 amt_mod.object = ob
                 amt_mod.use_vertex_groups = True
                 amt_mod.use_deform_preserve_volume = True
+                # turn off render here,
+                # otherwise we get deformations in exported skin node geometry
+                amt_mod.show_render = False
         # apply childOf modifier to non-pseudobone nodes in the cutscenedummy tree
         ##self.child_to_bones(ob, context.scene.objects['PSB_cutscenedummy'])
         #for name, obj in context.scene.objects.items():
