@@ -431,6 +431,12 @@ def getAuroraRotFromObject(obj):
     '''
     rotMode = obj.rotation_mode
 
+    if obj.parent and obj.parent.type == 'ARMATURE' and obj.parent.pose:
+        obj_rot = obj.matrix_local.to_quaternion()
+        parent_bone = obj.parent.pose.bones.get(obj.parent_bone)
+        obj_rot.rotate(parent_bone.matrix_basis.to_quaternion())
+        return [obj_rot.axis[0], obj_rot.axis[1], obj_rot.axis[2], obj_rot.angle]
+
     if   rotMode == "QUATERNION":
         q = obj.rotation_quaternion
         return [q.axis[0], q.axis[1], q.axis[2], q.angle]
