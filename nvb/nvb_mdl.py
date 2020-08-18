@@ -328,7 +328,71 @@ class Mdl():
                            Using default value " + self.animscale)
 
 
+    def bonesToAscii(self, amt_obj, asciiLines, bone=None, simple = False, nameDict = None):
+
+        if bone is None and not len(amt_obj.data.bones):
+            return
+        elif bone is None:
+            bone = amt_obj.data.bones.values()[0]
+
+        print('export bone {}'.format(bone.name))
+        bObject = nvb_utils.searchNode(amt_obj, lambda o: o.name == bone.name)
+
+        nodeType = nvb_utils.getNodeType(bObject)
+        switch = {'dummy':      nvb_node.Dummy,
+                  'patch':      nvb_node.Patch,
+                  'reference':  nvb_node.Reference,
+                  'trimesh':    nvb_node.Trimesh,
+                  'danglymesh': nvb_node.Danglymesh,
+                  'skin':       nvb_node.Skinmesh,
+                  'emitter':    nvb_node.Emitter,
+                  'light':      nvb_node.Light,
+                  'aabb':       nvb_node.Aabb}
+        try:
+            node = switch[nodeType]()
+        except KeyError:
+            raise nvb_def.MalformedMdlFile('Invalid node type')
+
+        node.toAscii(bObject, asciiLines, self.classification, simple, nameDict=nameDict)
+
+        '''
+        for child in bObject.children:
+            self.geometryToAscii(child, asciiLines, simple)
+        '''
+        childList = []
+        for child in bone.children:
+            boneObj = nvb_utils.searchNode(
+                amt_obj,
+                lambda o: o.parent_bone is not None and \
+                          o.parent_bone == child.name
+            )
+            childList.append((boneObj.nvb.imporder, child, 'BONE'))
+        '''
+        childList = []
+        for child in bObject.children:
+            childList.append((child.nvb.imporder, child))
+        childList.sort(key=lambda tup: tup[0])
+        '''
+
+        if len(bObject.children):
+            # the object may have direct object children that were brought into
+            # the armature hierarchy but are not themselves pseudobones,
+            # only direct children of the armature are pseudobones
+            for child in bObject.children:
+                childList.append((child.nvb.imporder, child, 'OBJ'))
+
+        childList.sort(key=lambda tup: tup[0])
+
+        for (imporder, child, child_type) in childList:
+            if child_type == 'BONE':
+                self.bonesToAscii(amt_obj, asciiLines, bone=child, simple=simple, nameDict=nameDict)
+            else:
+                self.geometryToAscii(child, asciiLines, simple=simple, nameDict=nameDict)
+
     def geometryToAscii(self, bObject, asciiLines, simple = False, nameDict = None):
+
+        if bObject.type == 'ARMATURE':
+            return self.bonesToAscii(bObject, asciiLines, simple=simple, nameDict=nameDict)
 
         nodeType = nvb_utils.getNodeType(bObject)
         switch = {'dummy':      nvb_node.Dummy,
