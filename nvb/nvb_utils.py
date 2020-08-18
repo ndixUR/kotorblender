@@ -433,7 +433,7 @@ def getAuroraRotFromObject(obj):
 
     if   rotMode == "QUATERNION":
         q = obj.rotation_quaternion
-        return [q.axis[0], q.axis[1], q.axis[0], q.angle]
+        return [q.axis[0], q.axis[1], q.axis[2], q.angle]
     elif rotMode == "AXIS_ANGLE":
         aa = obj.rotation_axis_angle
         return [aa[1], aa[2], aa[3], aa[0]]
