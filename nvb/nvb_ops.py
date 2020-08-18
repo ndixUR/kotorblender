@@ -247,7 +247,8 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
                              not parent.nvb.render)
         if self.is_pseudobone(obj) or self.is_control_handle(obj): # or has_pseudobone:
             bone_name = obj.name
-            obj.name = 'PSB_' + obj.name
+            # leave object name alone
+            #obj.name = 'PSB_' + obj.name
             #bone = amt.edit_bones.new(obj.name + 'Bone')
             bone = amt.edit_bones.new(bone_name)
             if pbone is not None:
@@ -369,6 +370,30 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
             self.adjust_control_handles(amt_obj, c)
 
 
+    def parent_pseudobones(self, amt, obj):
+        for c in obj.children:
+            self.parent_pseudobones(amt, c)
+        if not amt.data.bones.get(obj.name):
+            return
+        obj.parent = amt
+        obj.parent_bone = obj.name
+        obj.parent_type = 'BONE'
+        m = obj.matrix_world.copy()
+        bone_matrix = amt.data.bones.get(obj.name).matrix_local.copy()
+        # bone_matrix is using head as its translation point, we need tail
+        # do this a really awkward way until we figure out how to do it well
+        bone_scl_x = Matrix.Scale(bone_matrix.to_scale().x, 4, Vector((1, 0, 0)))
+        bone_scl_y = Matrix.Scale(bone_matrix.to_scale().y, 4, Vector((0, 1, 0)))
+        bone_scl_z = Matrix.Scale(bone_matrix.to_scale().z, 4, Vector((0, 0, 1)))
+        tail_loc_matrix = Matrix.Translation(amt.data.bones.get(obj.name).tail_local)
+        tail_matrix = (
+            tail_loc_matrix *
+            bone_matrix.to_quaternion().to_matrix().to_4x4() *
+            (bone_scl_x * bone_scl_y * bone_scl_z)
+        )
+        obj.matrix_parent_inverse = tail_matrix.inverted_safe()
+        obj.matrix_world = m
+
     def flatten_old_pseudobones(self, amt, obj):
         for c in obj.children:
             self.flatten_old_pseudobones(amt, c)
@@ -440,22 +465,28 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
         ob.show_axis = True
         #ob.parent = context.scene.objects['cutscenedummy']
         ob.parent = mdl
-        ob.location = node_cutscenedummy.location
+        ob.location = mdl.location #node_cutscenedummy.location
         #context.scene.objects.active = ob
         print(dir(ob))
         amt = ob.data
         print(dir(amt))
         amt.name = amt_name
         #amt.show_axes = True
+        amt.show_names = True
+        amt.show_axes = True
+        amt.draw_type = 'STICK'
         bpy.ops.object.mode_set(mode='EDIT')
-        amt.edit_bones[0].tail = node_rootdummy.location
+        #amt.edit_bones[0].tail = node_rootdummy.location
+        amt.edit_bones[0].tail = node_cutscenedummy.location
+        amt.edit_bones[0].name = 'cutscenedummy'
         #self.boner(amt, context.scene.objects['rootdummy'], pbone=amt.edit_bones[0])
         self.boner(amt, node_rootdummy, pbone=amt.edit_bones[0])
         self.adjust_control_handles(ob, amt.edit_bones[0])
         psb_rootdummy = nvb_utils.get_node_by_name(mdl, 'psb_rootdummy')
-        self.flatten_old_pseudobones(ob, psb_rootdummy)
-        self.child_to_bones(ob, node_cutscenedummy)
+        #self.flatten_old_pseudobones(ob, psb_rootdummy)
+        #self.child_to_bones(ob, node_cutscenedummy)
         bpy.ops.object.mode_set(mode='OBJECT')
+        self.parent_pseudobones(ob, mdl)
         # apply armature deformation modifier to skin meshes
         for name, obj in context.scene.objects.items():
             if obj.nvb.meshtype == nvb_def.Meshtype.SKIN and \
