@@ -467,7 +467,7 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
         # Make this modelname_amt
         amt_name = '{}.armature'.format(mdl.name)
         ob.name = amt_name
-        ob.show_axis = True
+        #ob.show_axis = True
         #ob.parent = context.scene.objects['cutscenedummy']
         ob.parent = mdl
         ob.location = mdl.location #node_cutscenedummy.location
