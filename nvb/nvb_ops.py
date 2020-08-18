@@ -394,6 +394,11 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
         obj.matrix_parent_inverse = tail_matrix.inverted_safe()
         obj.matrix_world = m
 
+        # lock transformations on pseudobone object controlled by armature
+        obj.lock_location = (True, True, True)
+        obj.lock_rotation = (True, True, True)
+        obj.lock_scale    = (True, True, True)
+
     def flatten_old_pseudobones(self, amt, obj):
         for c in obj.children:
             self.flatten_old_pseudobones(amt, c)
