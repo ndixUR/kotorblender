@@ -169,7 +169,18 @@ class GeometryNode():
         return scaled
 
     def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict = None):
-        if obj.parent and nameDict and obj.parent.name in nameDict:
+        if obj.parent and obj.parent.type == 'ARMATURE':
+            if obj.parent.data.bones.get(obj.parent_bone).parent is not None:
+                asciiLines.append('  parent ' +
+                    obj.parent.data.bones.get(obj.parent_bone).parent.name
+                )
+            elif obj.parent.parent is not None:
+                # should be the MDL root
+                asciiLines.append('  parent ' + obj.parent.parent.name)
+            else:
+                #XXX ERROR
+                pass
+        elif obj.parent and nameDict and obj.parent.name in nameDict:
             asciiLines.append('  parent ' + nameDict[obj.parent.name])
         elif obj.parent:
             asciiLines.append('  parent ' + obj.parent.name)
@@ -247,7 +258,18 @@ class Dummy(GeometryNode):
                 break
 
     def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
-        if obj.parent and nameDict and obj.parent.name in nameDict:
+        if obj.parent and obj.parent.type == 'ARMATURE':
+            if obj.parent.data.bones.get(obj.parent_bone).parent is not None:
+                asciiLines.append('  parent ' +
+                    obj.parent.data.bones.get(obj.parent_bone).parent.name
+                )
+            elif obj.parent.parent is not None:
+                # should be the MDL root
+                asciiLines.append('  parent ' + obj.parent.parent.name)
+            else:
+                #XXX ERROR
+                pass
+        elif obj.parent and nameDict and obj.parent.name in nameDict:
             asciiLines.append('  parent ' + nameDict[obj.parent.name])
         elif obj.parent:
             asciiLines.append('  parent ' + obj.parent.name)
