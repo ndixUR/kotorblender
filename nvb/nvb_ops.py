@@ -382,6 +382,7 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
         bone_matrix = amt.data.bones.get(obj.name).matrix_local.copy()
         # bone_matrix is using head as its translation point, we need tail
         # do this a really awkward way until we figure out how to do it well
+        '''
         bone_scl_x = Matrix.Scale(bone_matrix.to_scale().x, 4, Vector((1, 0, 0)))
         bone_scl_y = Matrix.Scale(bone_matrix.to_scale().y, 4, Vector((0, 1, 0)))
         bone_scl_z = Matrix.Scale(bone_matrix.to_scale().z, 4, Vector((0, 0, 1)))
@@ -392,6 +393,15 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
             (bone_scl_x * bone_scl_y * bone_scl_z)
         )
         obj.matrix_parent_inverse = tail_matrix.inverted_safe()
+        '''
+        #obj.matrix_parent_inverse = amt.pose.bones.get(obj.name).matrix.inverted_safe()
+        # matrix_parent_inverse does not seem to matter in any way.
+        # I noticed this when looking at objects' default matrix_parent_inverse
+        # which we supposedly set during MDL parenting,
+        # but they just wind up as an identity matrix anyway
+        #XXX figure out if there's a correct value for this,
+        #XXX and whether that correct value has some maybe useful effect
+        obj.matrix_parent_inverse = Matrix.Identity(4)
         obj.matrix_world = m
 
         # lock transformations on pseudobone object controlled by armature
