@@ -7,7 +7,7 @@ from . import nvb_utils
 from . import nvb_io
 from . import nvb_txi
 
-from mathutils import Matrix, Vector, Quaternion
+from mathutils import Matrix, Vector, Quaternion, Color
 
 class NVBCHILDREN_SMOOTHGROUP(bpy.types.Operator):
     bl_idname = "nvb.children_smoothgroup"
@@ -203,12 +203,21 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
                 psb.append(c)
         return psb
 
-    def is_pseudobone(self, obj):
+    def is_pseudobone(self, obj, deep=True):
         if obj is None:
             return False
-        if obj.nvb.meshtype == nvb_def.Meshtype.TRIMESH and \
-           not obj.nvb.render:
-            return True
+        if obj.nvb.meshtype == nvb_def.Meshtype.TRIMESH:
+            # none of these conditions are accurate for all cases, sigh
+            if not obj.nvb.render:
+                return True
+            if obj.nvb.ambientcolor != Color((1.0, 1.0, 1.0)):
+                return True
+            if deep and len(nvb_utils.searchNodeAll(
+                obj,
+                lambda o: self.is_pseudobone(o, deep=False) or \
+                          self.is_control_handle(o)
+               )) > 3:
+                return True
         #if obj.type == 'EMPTY' and \
         #   len(obj.children) and \
         #   len(self.child_pseudobones(obj)):
@@ -242,9 +251,6 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
 
     def boner(self, amt, obj, parent=None, pbone=None):
         bone = None
-        parent_pseudobone = (parent is not None and \
-                             parent.nvb.meshtype == nvb_def.Meshtype.TRIMESH and \
-                             not parent.nvb.render)
         if self.is_pseudobone(obj) or self.is_control_handle(obj): # or has_pseudobone:
             bone_name = obj.name
             # leave object name alone
@@ -254,6 +260,13 @@ class NVBSKIN_BONE_OPS(bpy.types.Operator):
             if pbone is not None:
                 bone.parent = pbone
                 #bone.head = pbone.tail
+                '''
+                if parent is not None and \
+                   len(self.child_pseudobones(parent)) == 1:
+                    #XXX there are some additional conditions for this,
+                    #XXX but start simple
+                    bone.use_connect = True
+                '''
             #else:
                 #bone.use_connect = False
                 #bone.head = obj.matrix_world.to_translation()
