@@ -147,6 +147,20 @@ def searchNodeInModel(obj, test):
     return searchNode(ancestorNode(obj, isRootDummy), test)
 
 
+def get_psb_parent_obj(obj):
+    '''
+    Get a pseudobone (object parented to armature) parent object by traversing
+    the bone hierarchy and locating the appropriate armature child
+    '''
+    if obj is None or obj.parent_type != 'BONE' or not obj.parent_bone:
+        return None
+    amt = searchNodeInModel(obj, lambda o: o.type == 'ARMATURE')
+    bone = amt.data.bones.get(obj.parent_bone)
+    if not bone.parent:
+        return amt.parent
+    return searchNode(amt, lambda o: o.name == bone.parent.name)
+
+
 def isRootDummy(obj, dummytype = nvb_def.Dummytype.MDLROOT):
     if not obj:
         return False
@@ -432,10 +446,9 @@ def getAuroraRotFromObject(obj):
     rotMode = obj.rotation_mode
 
     if obj.parent and obj.parent.type == 'ARMATURE' and obj.parent.pose:
-        obj_rot = obj.matrix_local.to_quaternion()
-        parent_bone = obj.parent.pose.bones.get(obj.parent_bone)
-        obj_rot.rotate(parent_bone.matrix_basis.to_quaternion())
-        return [obj_rot.axis[0], obj_rot.axis[1], obj_rot.axis[2], obj_rot.angle]
+        obj_parent_rot = get_psb_parent_obj(obj).matrix_world.to_quaternion()
+        q_obj = obj_parent_rot.inverted() * obj.matrix_world.to_quaternion()
+        return [q_obj.axis[0], q_obj.axis[1], q_obj.axis[2], q_obj.angle]
 
     if   rotMode == "QUATERNION":
         q = obj.rotation_quaternion
