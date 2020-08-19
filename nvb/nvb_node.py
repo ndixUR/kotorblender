@@ -163,6 +163,17 @@ class GeometryNode():
         #                             [0,0,0            ,1]])
 
         scaled = obj.matrix_local.copy()
+        if obj.parent and obj.parent.type == 'ARMATURE':
+            # for armature nodes, matrix_local is relative to armature,
+            # need to recalculate under actual parent node now
+            parent_obj = nvb_utils.get_psb_parent_obj(obj)
+            scaled = mathutils.Matrix.Translation(
+                (
+                    parent_obj.matrix_world.to_quaternion().inverted() *
+                    (obj.matrix_world.to_translation() -
+                     parent_obj.matrix_world.to_translation())
+                )
+            )
         scaled[0][3] = scaled[0][3] * p_mw_scale[0]
         scaled[1][3] = scaled[1][3] * p_mw_scale[1]
         scaled[2][3] = scaled[2][3] * p_mw_scale[2]
@@ -186,6 +197,12 @@ class GeometryNode():
             asciiLines.append('  parent ' + obj.parent.name)
         else:
             asciiLines.append('  parent ' + nvb_def.null)
+
+        if self.nodetype == 'dummy' and \
+           obj.nvb.dummytype == nvb_def.Dummytype.MDLROOT:
+            # Only parent for rootdummys
+            return
+
         # Scaling fix
         transmat = self.getAdjustedMatrix(obj)
         loc = transmat.to_translation()
@@ -256,67 +273,6 @@ class Dummy(GeometryNode):
             if self.name.endswith(element[0]):
                 obj.nvb.dummysubtype = element[1]
                 break
-
-    def addDataToAscii(self, obj, asciiLines, classification = nvb_def.Classification.UNKNOWN, simple = False, nameDict=None):
-        if obj.parent and obj.parent.type == 'ARMATURE':
-            if obj.parent.data.bones.get(obj.parent_bone).parent is not None:
-                asciiLines.append('  parent ' +
-                    obj.parent.data.bones.get(obj.parent_bone).parent.name
-                )
-            elif obj.parent.parent is not None:
-                # should be the MDL root
-                asciiLines.append('  parent ' + obj.parent.parent.name)
-            else:
-                #XXX ERROR
-                pass
-        elif obj.parent and nameDict and obj.parent.name in nameDict:
-            asciiLines.append('  parent ' + nameDict[obj.parent.name])
-        elif obj.parent:
-            asciiLines.append('  parent ' + obj.parent.name)
-        else:
-            asciiLines.append('  parent ' + nvb_def.null)
-
-        dummytype = obj.nvb.dummytype
-        if dummytype == nvb_def.Dummytype.MDLROOT:
-            # Only parent for rootdummys
-            return
-
-        # scale = round(nvb_utils.getAuroraScale(obj), 3)
-        # Scaling fix
-        asciiLines.append('  scale 1.0')
-        '''
-        if (scale != 1.0):
-            asciiLines.append('  scale ' + str(scale))
-        '''
-
-        # Scaling fix
-        transmat = self.getAdjustedMatrix(obj)
-        loc = transmat.to_translation()
-        s = '  position {: .7g} {: .7g} {: .7g}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
-        asciiLines.append(s)
-
-        rot = nvb_utils.euler2nwangle(transmat.to_euler('XYZ'))
-        s = '  orientation {: .7g} {: .7g} {: .7g} {: .7g}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
-        asciiLines.append(s)
-        '''
-        loc = obj.location
-        s = '  position {: .7g} {: .7g} {: .7g}'.format(round(loc[0], 7), round(loc[1], 7), round(loc[2], 7))
-        asciiLines.append(s)
-
-        rot = nvb_utils.getAuroraRotFromObject(obj)
-        s = '  orientation {: .7g} {: .7g} {: .7g} {: .7g}'.format(round(rot[0], 7), round(rot[1], 7), round(rot[2], 7), round(rot[3], 7))
-        asciiLines.append(s)
-        '''
-
-        color = obj.nvb.wirecolor
-        asciiLines.append('  wirecolor ' + str(round(color[0], 2)) + ' ' +
-                                           str(round(color[1], 2)) + ' ' +
-                                           str(round(color[2], 2)) )
-
-        # TODO: Handle types and subtypes, i.e. Check and modify name
-        subtype = obj.nvb.dummysubtype
-        if subtype == nvb_def.Dummytype.NONE:
-            pass
 
 
 class Patch(GeometryNode):
